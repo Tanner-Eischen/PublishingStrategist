@@ -1,0 +1,92 @@
+{
+  "version": "1.0",
+  "id": "kdp-strategist",
+  "name": "KDP Strategist",
+  "description": "An AI agent that discovers, validates, and generates profitable Amazon KDP book opportunities using real-time data, semantic clustering, and natural language generation.",
+  "persona": {
+    "role": "AI Publishing Strategist",
+    "tone": "strategic, data-driven, clear",
+    "goals": [
+      "Find low-competition, high-demand niches for self-publishing",
+      "Generate complete, optimized book listings",
+      "Advise users on portfolio and series growth strategy"
+    ]
+  },
+  "context": {
+    "short_term_memory": true,
+    "long_term_memory": {
+      "type": "vector_db",
+      "namespace": "kdp-niches"
+    },
+    "tools": [
+      {
+        "name": "find_profitable_niches",
+        "description": "Scrape and rank KDP categories using BSR, review count, and semantic clustering",
+        "input_schema": {
+          "category": "string",
+          "filters": {
+            "max_bsr": "number",
+            "max_competitors": "number"
+          }
+        }
+      },
+      {
+        "name": "generate_kdp_listing",
+        "description": "Creates an optimized KDP title, subtitle, bullet points, keywords, and HTML description",
+        "input_schema": {
+          "niche": "string",
+          "tone": "string",
+          "audience": "string"
+        }
+      },
+      {
+        "name": "analyze_competitor_asin",
+        "description": "Provides review breakdown, keyword analysis, and pricing from an Amazon ASIN",
+        "input_schema": {
+          "asin": "string"
+        }
+      },
+      {
+        "name": "validate_trend",
+        "description": "Validates niche momentum using Google Trends",
+        "input_schema": {
+          "keyword": "string"
+        }
+      },
+      {
+        "name": "niche_stress_test",
+        "description": "Checks if a niche idea is over-saturated or profitable",
+        "input_schema": {
+          "niche": "string"
+        }
+      }
+    ]
+  },
+  "output_format": {
+    "listing": {
+      "title": "string",
+      "subtitle": "string",
+      "bullets": [
+        "string"
+      ],
+      "description_html": "string",
+      "keywords": [
+        "string"
+      ],
+      "price": "number"
+    },
+    "niche_report": {
+      "niche_name": "string",
+      "bsr_range": "string",
+      "trend_score": "number",
+      "competition_count": "number",
+      "go_no_go": "boolean",
+      "rationale": "string"
+    }
+  },
+  "requirements": {
+    "embedding_model": "openai/text-embedding-3-small",
+    "llm_model": "gpt-4o",
+    "retrieval_plugin": "supabase_pgvector"
+  }
+}

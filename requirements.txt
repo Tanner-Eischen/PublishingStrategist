@@ -1,0 +1,52 @@
+# Core MCP and Agent Framework
+mcp>=0.1.0
+langchain>=0.1.0
+langchain-community>=0.0.1
+
+# Data Analysis and Processing
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# External API Clients
+keepa>=1.9.0
+pytrends>=4.9.0
+requests>=2.31.0
+aiohttp>=3.8.0
+
+# Data Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Machine Learning and Embeddings
+scikit-learn>=1.3.0
+transformers>=4.30.0
+sentence-transformers>=2.2.0
+
+# Caching and Storage
+redis>=4.5.0
+sqlite3-utils>=0.1.0
+
+# Configuration and Environment
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+PyYAML>=6.0
+
+# Logging and Monitoring
+structlog>=23.1.0
+rich>=13.4.0
+
+# Testing and Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.7.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Utilities
+click>=8.1.0
+tqdm>=4.65.0
+dateutil>=2.8.0
+fuzzy>=1.2.2
