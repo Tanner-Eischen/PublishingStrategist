@@ -38,7 +38,7 @@ async def demonstrate_niche_discovery(agent: KDPStrategistAgent):
     
     try:
         # Example: Find profitable niches in the cooking space
-        result = await agent.call_tool("find_profitable_niches", {
+        result = await agent.discover_niches("find_profitable_niches", {
             "base_keywords": ["healthy cooking", "meal prep", "quick recipes"],
             "max_niches": 3,
             "min_profitability": 60,
@@ -79,7 +79,7 @@ async def demonstrate_competitor_analysis(agent: KDPStrategistAgent):
     
     try:
         # Example: Analyze a competitor ASIN (using a sample ASIN)
-        result = await agent.call_tool("analyze_competitor_asin", {
+        result = await agent.analyze_competitors("analyze_competitor_asin", {
             "asin": "B08EXAMPLE123",  # Sample ASIN
             "include_market_analysis": True,
             "analyze_pricing_history": True
@@ -117,7 +117,7 @@ async def demonstrate_listing_generation(agent: KDPStrategistAgent):
     
     try:
         # Example: Generate a KDP listing for a cookbook
-        result = await agent.call_tool("generate_kdp_listing", {
+        result = await agent.generate_listing("generate_kdp_listing", {
             "niche_keyword": "healthy meal prep",
             "target_audience": "busy professionals and health-conscious individuals",
             "book_type": "cookbook",
@@ -168,7 +168,7 @@ async def demonstrate_trend_validation(agent: KDPStrategistAgent):
     
     try:
         # Example: Validate trend for "intermittent fasting"
-        result = await agent.call_tool("validate_trend", {
+        result = await agent.validate_trendsl("validate_trend", {
             "keyword": "intermittent fasting",
             "timeframe": "today 12-m",
             "include_forecasts": True,
@@ -225,7 +225,7 @@ async def demonstrate_stress_testing(agent: KDPStrategistAgent):
     
     try:
         # Example: Stress test the "keto recipes" niche
-        result = await agent.call_tool("niche_stress_test", {
+        result = await agent.stress_test_niche("niche_stress_test", {
             "niche_keyword": "keto recipes",
             "include_all_scenarios": True
         })

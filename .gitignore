@@ -1,0 +1,27 @@
+# Node.js
+node_modules
+.env
+
+# Python
+virtualenv
+virtualenvs
+venv
+__pycache__
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+thumbs.db
+
+# Vibe Tools
+.trae/
+
+# PRPs
+PRPs/

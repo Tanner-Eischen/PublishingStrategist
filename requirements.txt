@@ -3,13 +3,19 @@ mcp>=0.1.0
 langchain>=0.1.0
 langchain-community>=0.0.1
 
+# FastAPI and Web Server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+websockets>=12.0
+
 # Data Analysis and Processing
 pandas>=2.0.0
 numpy>=1.24.0
-scipy>=1.10.0
+scipy==1.16.0
 
 # External API Clients
-keepa>=1.9.0
+keepa>=1.3.0
 pytrends>=4.9.0
 requests>=2.31.0
 aiohttp>=3.8.0
@@ -26,12 +32,13 @@ sentence-transformers>=2.2.0
 
 # Caching and Storage
 redis>=4.5.0
-sqlite3-utils>=0.1.0
 
 # Configuration and Environment
 python-dotenv>=1.0.0
 pydantic>=2.0.0
+pydantic-settings>=2.1.0
 PyYAML>=6.0
+npm
 
 # Logging and Monitoring
 structlog>=23.1.0
@@ -48,5 +55,15 @@ mypy>=1.5.0
 # Utilities
 click>=8.1.0
 tqdm>=4.65.0
-dateutil>=2.8.0
+python-dateutil>=2.8.0
 fuzzy>=1.2.2
+
+# Export and File Handling
+openpyxl>=3.1.0
+reportlab>=4.0.0
+orjson>=3.9.0
+
+# Additional FastAPI Dependencies
+httpx>=0.25.0
+cachetools>=5.3.0
+typing-extensions>=4.8.0
