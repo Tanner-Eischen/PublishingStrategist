@@ -37,9 +37,13 @@ class NicheData(BaseModel):
         # Map to profitability_score_numeric
         score: float = Field(..., description="Profitability score (0-100)")
         # Use the Enum for competition_level
-        competition_level: CompetitionLevel = Field(..., description="Competition level: low, medium, high")
+        competition_level: CompetitionLevel = Field(
+            ..., description="Categorical competition level"
+        )
         # Add profitability_tier field using the Enum
-        profitability_tier: ProfitabilityTier = Field(..., description="Profitability tier: low, medium, high")
+        profitability_tier: ProfitabilityTier = Field(
+            ..., description="Categorical profitability tier"
+        )
         risk_level: RiskLevel = Field(..., description="Overall risk level for the niche") # Add risk_level
         search_volume: int = Field(..., description="Monthly search volume") # This will be derived
         trend_direction: str = Field(..., description="Trend direction: rising, stable, declining") # This will be derived
