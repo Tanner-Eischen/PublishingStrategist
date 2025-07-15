@@ -93,72 +93,89 @@ class StressTestReport:
 class StressTester:
     """Core stress testing engine."""
     
+    # Default parameters for each stress scenario
+    MARKET_SATURATION_DEFAULT = StressTestParameters(
+        scenario=StressScenario.MARKET_SATURATION,
+        severity=0.7,
+        duration_months=6,
+        recovery_months=12,
+        probability=0.3,
+        description="Market becomes oversaturated with competitors",
+    )
+
+    ECONOMIC_DOWNTURN_DEFAULT = StressTestParameters(
+        scenario=StressScenario.ECONOMIC_DOWNTURN,
+        severity=0.6,
+        duration_months=8,
+        recovery_months=18,
+        probability=0.2,
+        description="Economic recession reduces consumer spending",
+    )
+
+    COMPETITIVE_FLOODING_DEFAULT = StressTestParameters(
+        scenario=StressScenario.COMPETITIVE_FLOODING,
+        severity=0.8,
+        duration_months=4,
+        recovery_months=8,
+        probability=0.4,
+        description="Sudden influx of new competitors",
+    )
+
+    SEASONAL_CRASH_DEFAULT = StressTestParameters(
+        scenario=StressScenario.SEASONAL_CRASH,
+        severity=0.9,
+        duration_months=3,
+        recovery_months=6,
+        probability=0.5,
+        description="Severe seasonal demand drop",
+    )
+
+    PLATFORM_CHANGES_DEFAULT = StressTestParameters(
+        scenario=StressScenario.PLATFORM_CHANGES,
+        severity=0.5,
+        duration_months=3,
+        recovery_months=9,
+        probability=0.3,
+        description="Amazon algorithm or policy changes",
+    )
+
+    TREND_REVERSAL_DEFAULT = StressTestParameters(
+        scenario=StressScenario.TREND_REVERSAL,
+        severity=0.8,
+        duration_months=12,
+        recovery_months=24,
+        probability=0.25,
+        description="Major trend reversal or consumer preference shift",
+    )
+
+    CONSUMER_SHIFT_DEFAULT = StressTestParameters(
+        scenario=StressScenario.CONSUMER_SHIFT,
+        severity=0.6,
+        duration_months=9,
+        recovery_months=15,
+        probability=0.35,
+        description="Consumer behavior and preferences change",
+    )
+
+    SUPPLY_CHAIN_DISRUPTION_DEFAULT = StressTestParameters(
+        scenario=StressScenario.SUPPLY_CHAIN_DISRUPTION,
+        severity=0.4,
+        duration_months=2,
+        recovery_months=4,
+        probability=0.15,
+        description="Supply chain or production disruptions",
+    )
+
     # Stress test scenarios with default parameters
     DEFAULT_SCENARIOS = {
-        StressScenario.MARKET_SATURATION: StressTestParameters(
-            scenario=StressScenario.MARKET_SATURATION,
-            severity=0.7,
-            duration_months=6,
-            recovery_months=12,
-            probability=0.3,
-            description="Market becomes oversaturated with competitors"
-        ),
-        StressScenario.ECONOMIC_DOWNTURN: StressTestParameters(
-            scenario=StressScenario.ECONOMIC_DOWNTURN,
-            severity=0.6,
-            duration_months=8,
-            recovery_months=18,
-            probability=0.2,
-            description="Economic recession reduces consumer spending"
-        ),
-        StressScenario.COMPETITIVE_FLOODING: StressTestParameters(
-            scenario=StressScenario.COMPETITIVE_FLOODING,
-            severity=0.8,
-            duration_months=4,
-            recovery_months=8,
-            probability=0.4,
-            description="Sudden influx of new competitors"
-        ),
-        StressScenario.SEASONAL_CRASH: StressTestParameters(
-            scenario=StressScenario.SEASONAL_CRASH,
-            severity=0.9,
-            duration_months=3,
-            recovery_months=6,
-            probability=0.5,
-            description="Severe seasonal demand drop"
-        ),
-        StressScenario.PLATFORM_CHANGES: StressTestParameters(
-            scenario=StressScenario.PLATFORM_CHANGES,
-            severity=0.5,
-            duration_months=3,
-            recovery_months=9,
-            probability=0.3,
-            description="Amazon algorithm or policy changes"
-        ),
-        StressScenario.TREND_REVERSAL: StressTestParameters(
-            scenario=StressScenario.TREND_REVERSAL,
-            severity=0.8,
-            duration_months=12,
-            recovery_months=24,
-            probability=0.25,
-            description="Major trend reversal or consumer preference shift"
-        ),
-        StressScenario.CONSUMER_SHIFT: StressTestParameters(
-            scenario=StressScenario.CONSUMER_SHIFT,
-            severity=0.6,
-            duration_months=9,
-            recovery_months=15,
-            probability=0.35,
-            description="Consumer behavior and preferences change"
-        ),
-        StressScenario.SUPPLY_CHAIN_DISRUPTION: StressTestParameters(
-            scenario=StressScenario.SUPPLY_CHAIN_DISRUPTION,
-            severity=0.4,
-            duration_months=2,
-            recovery_months=4,
-            probability=0.15,
-            description="Supply chain or production disruptions"
-        )
+        StressScenario.MARKET_SATURATION: MARKET_SATURATION_DEFAULT,
+        StressScenario.ECONOMIC_DOWNTURN: ECONOMIC_DOWNTURN_DEFAULT,
+        StressScenario.COMPETITIVE_FLOODING: COMPETITIVE_FLOODING_DEFAULT,
+        StressScenario.SEASONAL_CRASH: SEASONAL_CRASH_DEFAULT,
+        StressScenario.PLATFORM_CHANGES: PLATFORM_CHANGES_DEFAULT,
+        StressScenario.TREND_REVERSAL: TREND_REVERSAL_DEFAULT,
+        StressScenario.CONSUMER_SHIFT: CONSUMER_SHIFT_DEFAULT,
+        StressScenario.SUPPLY_CHAIN_DISRUPTION: SUPPLY_CHAIN_DISRUPTION_DEFAULT,
     }
     
     @classmethod
