@@ -157,7 +157,7 @@ class StressTestingResponse(BaseModel):
     status: str = Field(default="success", description="Response status")
     niche: str = Field(..., description="Tested niche")
     overall_resilience: float = Field(..., description="Overall resilience score (0-100)")
-    risk_level: str = Field(..., description="Risk level: low, medium, high")
+    risk_level: RiskLevel = Field(..., description="Risk level: low, medium, high")
     scenarios: List[StressTestScenario] = Field(..., description="Stress test scenarios")
     analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
     charts: List[ChartData] = Field(default=[], description="Visualization data")
