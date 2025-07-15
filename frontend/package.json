@@ -1,5 +1,5 @@
 {
-  "name": "kdp-strategist-frontend",
+  "name": "kdp_strategist-frontend",
   "version": "1.0.0",
   "description": "React frontend for KDP Strategist AI Agent",
   "private": true,

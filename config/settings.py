@@ -79,7 +79,7 @@ class LoggingConfig:
 @dataclass
 class MCPConfig:
     """Configuration for Model Context Protocol integration."""
-    server_name: str = field(default="kdp-strategist")
+    server_name: str = field(default="kdp_strategist")
     server_version: str = field(default="0.1.0")
     transport_type: str = field(default="stdio")  # "stdio", "sse", "websocket"
     host: str = field(default="localhost")

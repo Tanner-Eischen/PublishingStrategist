@@ -223,7 +223,7 @@ class KeepaClient:
         
         # Set default headers
         self.session.headers.update({
-            "User-Agent": "KDP-Strategist/1.0",
+            "User-Agent": "KDP_Strategist/1.0",
             "Accept": "application/json",
         })
         

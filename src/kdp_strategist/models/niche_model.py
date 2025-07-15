@@ -9,8 +9,26 @@ from typing import List, Tuple, Dict, Optional, Any
 from enum import Enum
 from datetime import datetime
 import json
+from src.kdp_strategist.models.trend_model import TrendAnalysis
 
+class CompetitionLevel(Enum):
+        """Categorical representation of market competition."""
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
 
+class ProfitabilityTier(Enum):
+        """Categorical representation of niche profitability."""
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+
+class RiskLevel(Enum): # NEW: Introduce a RiskLevel enum for consistency
+        """Categorical representation of niche risk."""
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+        VERY_HIGH = "very_high"
 class NicheCategory(Enum):
     """Enumeration of major KDP categories."""
     BUSINESS = "Business & Money"
@@ -59,32 +77,37 @@ class Niche:
         seasonal_factors: Seasonal considerations for the niche
     """
     
-    # Core identification
-    category: str
-    subcategory: str
-    keywords: List[str]
-    
-    # Scoring metrics (0-100 scale)
-    competition_score: float
-    profitability_score: float
-    confidence_score: float = 0.0
-    market_size_score: float = 0.0
-    
-    # Trend analysis
-    trend_direction: str = "stable"  # 'rising', 'stable', 'declining'
-    estimated_monthly_searches: int = 0
-    
-    # Competition data
-    top_competitors: List[str] = field(default_factory=list)  # ASINs
-    recommended_price_range: Tuple[float, float] = (9.99, 19.99)
-    
-    # Content analysis
-    content_gaps: List[str] = field(default_factory=list)
-    seasonal_factors: Dict[str, float] = field(default_factory=dict)
-    
-    # Metadata
-    analysis_date: datetime = field(default_factory=datetime.now)
-    additional_data: Dict[str, Any] = field(default_factory=dict)
+    @dataclass
+    class Niche:
+        # Core identification
+        category: str # Consider making this NicheCategory if strict
+        primary_keyword: str # Added: crucial for identification, used in discovery/testing
+        subcategory: str = ""
+        keywords: List[str] = field(default_factory=list)
+
+        # Raw Numeric Scores (0-100 scale)
+        competition_score_numeric: float = 0.0 # Renamed
+        profitability_score_numeric: float = 0.0 # Renamed
+        market_size_score: float = 0.0
+        confidence_score: float = 0.0
+
+        # Categorical Levels (derived from numeric scores)
+        competition_level: CompetitionLevel = CompetitionLevel.MEDIUM # NEW field
+        profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
+
+        # Detailed Analysis Data (store objects or dicts for flexibility)
+        trend_analysis_data: Optional[TrendAnalysis] = None # Renamed, store TrendAnalysis object
+        competitor_analysis_data: Dict[str, Any] = field(default_factory=dict) # Added, matches usage
+        seasonal_factors: Dict[str, float] = field(default_factory=dict)
+        content_gaps: List[str] = field(default_factory=list)
+
+        # Other relevant niche attributes
+        recommended_price_range: Tuple[float, float] = (9.99, 19.99)
+        top_competitors: List[str] = field(default_factory=list) # ASINs
+
+        # Metadata
+        analysis_date: datetime = field(default_factory=datetime.now)
+        additional_data: Dict[str, Any] = field(default_factory=dict)ict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
         """Validate data after initialization."""
@@ -96,7 +119,7 @@ class Niche:
     def _validate_scores(self) -> None:
         """Validate that all scores are within valid ranges."""
         scores = {
-            "competition_score": self.competition_score,
+            "competition_score": self.competition_score_numeric,
             "profitability_score": self.profitability_score,
             "confidence_score": self.confidence_score,
             "market_size_score": self.market_size_score,

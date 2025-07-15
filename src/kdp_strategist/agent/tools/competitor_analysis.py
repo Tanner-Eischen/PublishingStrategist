@@ -23,7 +23,7 @@ from statistics import mean, median
 
 from ...data.cache_manager import CacheManager
 from ...data.keepa_client import KeepaClient, ProductData
-from ...models.niche_model import Niche, CompetitionLevel
+from ...models.niche_model import Niche
 
 logger = logging.getLogger(__name__)
 

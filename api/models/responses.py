@@ -182,7 +182,7 @@ class ErrorResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Response model for health check."""
     status: str = Field(default="healthy", description="Service status")
-    service: str = Field(default="kdp-strategist-api", description="Service name")
+    service: str = Field(default="kdp_strategist-api", description="Service name")
     version: str = Field(default="1.0.0", description="API version")
     timestamp: datetime = Field(default_factory=datetime.now, description="Health check timestamp")
     dependencies: Dict[str, str] = Field(default={}, description="Dependency status")

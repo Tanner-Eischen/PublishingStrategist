@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "id": "kdp-strategist",
+  "id": "kdp_strategist",
   "name": "KDP Strategist",
   "description": "An AI agent that discovers, validates, and generates profitable Amazon KDP book opportunities using real-time data, semantic clustering, and natural language generation.",
   "persona": {
