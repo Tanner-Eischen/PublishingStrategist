@@ -17,13 +17,18 @@ import uvicorn
 
 # Import existing MCP agent
 try:
-    # from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
-except ImportError:
-    # Fallback for development
+    # Prefer the real agent adapter if available
     import sys
     import os
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-    from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
+    from kdp_strategist.agent.kdp_strategist_adapter import (
+        KDPStrategistAdapter as KDPStrategistAgent,
+    )
+except ImportError:
+    # Fallback to mock implementation for development
+    from kdp_strategist.agent.mock_kdp_strategist_agent import (
+        MockKDPStrategistAgent as KDPStrategistAgent,
+    )
 
 # Import API routers
 from .routers import niches, competitors, listings, trends, stress
