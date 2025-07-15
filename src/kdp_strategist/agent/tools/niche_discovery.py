@@ -26,7 +26,8 @@ from ...data.keepa_client import KeepaClient
 from ...data.trends_client import TrendsClient
 from ...models.niche_model import Niche
 from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
-
+from src.kdp_strategist.models.niche_model import Niche, CompetitionLevel, ProfitabilityTier, RiskLevel # Add RiskLevel
+from src.kdp_strategist.models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
 logger = logging.getLogger(__name__)
 
 
@@ -459,23 +460,26 @@ async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[s
             continue
         
         # Create niche object
-        niche = Niche(
-            category=categories[0] if categories else "Books & Journals",
-            primary_keyword=keyword,
-            keywords=[keyword] + trend_analysis.related_queries[:10],
-            trend_analysis=trend_analysis,
-            competitor_data={
-                "count": competition.get("competitor_count", 0),
-                "avg_reviews": competition.get("avg_review_count", 0),
-                "avg_rating": competition.get("avg_rating", 0),
-                "price_analysis": competition.get("price_range", {})
-            },
-            market_size_score=_estimate_market_size(trend_analysis, competition),
-            seasonal_factors=trend_analysis.seasonal_patterns,
-            last_updated=datetime.now()
-        )
-        
-        niche_candidates.append(niche)
+    niche = Niche(
+    category=categories[0] if categories else "Books & Journals",
+    primary_keyword=keyword,
+    keywords=[keyword] + trend_analysis.related_queries[:10],
+    trend_analysis_data=trend_analysis, # Pass TrendAnalysis object directly
+    competitor_analysis_data=competition, # Pass competitor data as dict
+    market_size_score=_estimate_market_size(trend_analysis, competition),
+    seasonal_factors=trend_analysis.seasonal_patterns,
+        # Calculate and assign numeric scores directly during construction
+    profitability_score_numeric=NicheScorer.calculate_profitability_score({
+        "trend_analysis": trend_analysis,
+        "competition_data": competition,
+        "market_metrics": {"estimated_search_volume": _estimate_market_size(trend_analysis, competition) * 100},
+        "seasonal_patterns": trend_analysis.seasonal_patterns,
+        "content_analysis": {"identified_gaps": 5}
+    }),
+    competition_score_numeric=NicheScorer._score_competition_level(competition) or 0.0,
+        # `competition_level` and `profitability_tier` will be set in Niche's __post_init__
+    )
+    niche_candidates.append(niche)
     
     return niche_candidates
 
@@ -520,45 +524,31 @@ def _score_and_rank_niches(niche_candidates: List[Niche], min_score: float,
     max_competitors = competition_limits.get(max_competition, 50)
     
     for niche in niche_candidates:
-        # Check competition filter
-        competitor_count = niche.competitor_data.get("count", 0)
-        if competitor_count > max_competitors:
-            continue
-        
-        # Calculate profitability score
-        niche_data = {
-            "trend_analysis": niche.trend_analysis,
-            "competition_data": niche.competitor_data,
+        # Re-calculate or confirm numeric competition score
+        niche.competition_score_numeric = NicheScorer._score_competition_level(niche.competitor_analysis_data) or 0.0
+
+        # Set the categorical competition level based on numeric score
+        niche.competition_level = Niche._determine_competition_level(niche.competition_score_numeric)
+
+        # Calculate the numeric profitability score (ensure it uses the renamed fields internally)
+        niche_data_for_scoring = {
+            "trend_analysis": niche.trend_analysis_data,
+            "competition_data": niche.competitor_analysis_data,
             "market_metrics": {"estimated_search_volume": niche.market_size_score * 100},
             "seasonal_patterns": niche.seasonal_factors,
-            "content_analysis": {"identified_gaps": 5}  # Placeholder
+            "content_analysis": {"identified_gaps": 5}
         }
-        
-        profitability_score = NicheScorer.calculate_profitability_score(niche_data)
-        niche.profitability_score = profitability_score
-        
-        # Set competition level
-        if competitor_count <= 10:
-            niche.competition_score = CompetitionLevel.LOW
-        elif competitor_count <= 50:
-            niche.competition_score = CompetitionLevel.MEDIUM
-        else:
-            niche.competition_score = CompetitionLevel.HIGH
-        
-        # Set profitability tier
-        if profitability_score >= 80:
-            niche.profitability_tier = ProfitabilityTier.HIGH
-        elif profitability_score >= 60:
-            niche.profitability_tier = ProfitabilityTier.MEDIUM
-        else:
-            niche.profitability_tier = ProfitabilityTier.LOW
-        
-        # Apply minimum score filter
-        if profitability_score >= min_score:
+        niche.profitability_score_numeric = NicheScorer.calculate_profitability_score(niche_data_for_scoring)
+
+        # Set the categorical profitability tier based on numeric score
+        niche.profitability_tier = Niche._determine_profitability_tier(niche.profitability_score_numeric)
+
+        # Apply minimum score filter (using numeric score)
+        if niche.profitability_score_numeric >= min_score:
             scored_niches.append(niche)
-    
-    # Sort by profitability score (descending)
-    scored_niches.sort(key=lambda n: n.profitability_score, reverse=True)
+
+    # Sort by profitability score_numeric (descending)
+    scored_niches.sort(key=lambda n: n.profitability_score_numeric, reverse=True)
     
     return scored_niches
 
@@ -573,13 +563,13 @@ def _generate_recommendations(top_niches: List[Niche], all_scored_niches: List[N
     recommendations = {
         "primary_recommendation": {
             "niche": best_niche.primary_keyword,
-            "score": best_niche.profitability_score,
-            "reason": f"Highest profitability score with {best_niche.competition_level.value} competition"
+            "score": best_niche.profitability_score_numeric, # Use numeric score
+            "reason": f"Highest profitability score with {best_niche.competition_level.value} competition" # Use enum .value
         },
         "quick_wins": [],
         "long_term_opportunities": [],
         "market_insights": {
-            "avg_profitability_score": sum(n.profitability_score for n in all_scored_niches) / len(all_scored_niches),
+            "avg_profitability_score": sum(n.profitability_score_numeric for n in all_scored_niches) / len(all_scored_niches),
             "competition_distribution": {
                 "low": len([n for n in all_scored_niches if n.competition_level == CompetitionLevel.LOW]),
                 "medium": len([n for n in all_scored_niches if n.competition_level == CompetitionLevel.MEDIUM]),
@@ -590,7 +580,7 @@ def _generate_recommendations(top_niches: List[Niche], all_scored_niches: List[N
     
     # Identify quick wins (low competition, decent score)
     for niche in top_niches[:5]:
-        if niche.competition_level == CompetitionLevel.LOW and niche.profitability_score >= 60:
+        if niche.competition_level == CompetitionLevel.LOW and niche.profitability_score_numeric >= 60:
             recommendations["quick_wins"].append({
                 "niche": niche.primary_keyword,
                 "score": niche.profitability_score,
@@ -599,9 +589,9 @@ def _generate_recommendations(top_niches: List[Niche], all_scored_niches: List[N
     
     # Identify long-term opportunities (high potential, manageable competition)
     for niche in top_niches[:10]:
-        if (niche.profitability_score >= 75 and 
-            niche.trend_analysis and 
-            niche.trend_analysis.direction == TrendDirection.RISING):
+        if (niche.profitability_score_numeric >= 75 and
+            niche.trend_analysis_data and # Use the renamed field
+            niche.trend_analysis_data.direction == TrendDirection.RISING):
             recommendations["long_term_opportunities"].append({
                 "niche": niche.primary_keyword,
                 "score": niche.profitability_score,

@@ -29,6 +29,7 @@ class RiskLevel(Enum): # NEW: Introduce a RiskLevel enum for consistency
         MEDIUM = "medium"
         HIGH = "high"
         VERY_HIGH = "very_high"
+
 class NicheCategory(Enum):
     """Enumeration of major KDP categories."""
     BUSINESS = "Business & Money"
@@ -77,135 +78,93 @@ class Niche:
         seasonal_factors: Seasonal considerations for the niche
     """
     
-    @dataclass
-    class Niche:
+    
         # Core identification
-        category: str # Consider making this NicheCategory if strict
-        primary_keyword: str # Added: crucial for identification, used in discovery/testing
-        subcategory: str = ""
-        keywords: List[str] = field(default_factory=list)
+    category: str # Consider making this NicheCategory if strict
+    primary_keyword: str # Added: crucial for identification, used in discovery/testing
+    subcategory: str = ""
+    keywords: List[str] = field(default_factory=list)
 
         # Raw Numeric Scores (0-100 scale)
-        competition_score_numeric: float = 0.0 # Renamed
-        profitability_score_numeric: float = 0.0 # Renamed
-        market_size_score: float = 0.0
-        confidence_score: float = 0.0
+    competition_score_numeric: float = 0.0 # Renamed
+    profitability_score_numeric: float = 0.0 # Renamed
+    market_size_score: float = 0.0
+    confidence_score: float = 0.0
 
         # Categorical Levels (derived from numeric scores)
-        competition_level: CompetitionLevel = CompetitionLevel.MEDIUM # NEW field
-        profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
+    competition_level: CompetitionLevel = CompetitionLevel.MEDIUM # NEW field
+    profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
 
         # Detailed Analysis Data (store objects or dicts for flexibility)
-        trend_analysis_data: Optional[TrendAnalysis] = None # Renamed, store TrendAnalysis object
-        competitor_analysis_data: Dict[str, Any] = field(default_factory=dict) # Added, matches usage
-        seasonal_factors: Dict[str, float] = field(default_factory=dict)
-        content_gaps: List[str] = field(default_factory=list)
+    trend_analysis_data: Optional[TrendAnalysis] = None # Renamed, store TrendAnalysis object
+    competitor_analysis_data: Dict[str, Any] = field(default_factory=dict) # Added, matches usage
+    seasonal_factors: Dict[str, float] = field(default_factory=dict)
+    content_gaps: List[str] = field(default_factory=list)
 
         # Other relevant niche attributes
-        recommended_price_range: Tuple[float, float] = (9.99, 19.99)
-        top_competitors: List[str] = field(default_factory=list) # ASINs
+    recommended_price_range: Tuple[float, float] = (9.99, 19.99)
+    top_competitors: List[str] = field(default_factory=list) # ASINs
 
         # Metadata
-        analysis_date: datetime = field(default_factory=datetime.now)
-        additional_data: Dict[str, Any] = field(default_factory=dict)ict[str, Any] = field(default_factory=dict)
+    analysis_date: datetime = field(default_factory=datetime.now)
+    additional_data: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        """Validate data after initialization."""
-        self._validate_scores()
-        self._validate_keywords()
-        self._validate_price_range()
-        self._validate_trend_direction()
-    
-    def _validate_scores(self) -> None:
-        """Validate that all scores are within valid ranges."""
-        scores = {
-            "competition_score": self.competition_score_numeric,
-            "profitability_score": self.profitability_score,
-            "confidence_score": self.confidence_score,
-            "market_size_score": self.market_size_score,
-        }
-        
-        for score_name, score_value in scores.items():
-            if not 0 <= score_value <= 100:
-                raise ValueError(f"{score_name} must be between 0 and 100, got {score_value}")
-    
-    def _validate_keywords(self) -> None:
-        """Validate keywords list."""
-        if not self.keywords:
-            raise ValueError("Keywords list cannot be empty")
-        
-        if len(self.keywords) > 50:
-            raise ValueError("Too many keywords (max 50)")
-        
-        for keyword in self.keywords:
-            if not isinstance(keyword, str) or not keyword.strip():
-                raise ValueError("All keywords must be non-empty strings")
-    
-    def _validate_price_range(self) -> None:
-        """Validate price range."""
-        min_price, max_price = self.recommended_price_range
-        if min_price <= 0 or max_price <= 0:
-            raise ValueError("Prices must be positive")
-        if min_price >= max_price:
-            raise ValueError("Minimum price must be less than maximum price")
-    
-    def _validate_trend_direction(self) -> None:
-        """Validate trend direction."""
-        valid_directions = {"rising", "stable", "declining"}
-        if self.trend_direction not in valid_directions:
-            raise ValueError(f"Trend direction must be one of {valid_directions}")
-    
+            self._validate_scores()
+            self._validate_keywords()
+            self._validate_price_range()
+            # Auto-assign categorical levels if numeric scores are provided
+            if self.competition_score_numeric != 0.0:
+                self.competition_level = self._determine_competition_level(self.competition_score_numeric)
+            if self.profitability_score_numeric != 0.0:
+                self.profitability_tier = self._determine_profitability_tier(self.profitability_score_numeric)
+
+        # Static methods to determine enum from numeric score (can be moved outside if preferred)
+    @staticmethod
+    def _determine_competition_level(score: float) -> CompetitionLevel:
+            if score <= 30: return CompetitionLevel.LOW
+            elif score <= 60: return CompetitionLevel.MEDIUM
+            else: return CompetitionLevel.HIGH
+
+    @staticmethod
+    def _determine_profitability_tier(score: float) -> ProfitabilityTier:
+            if score >= 80: return ProfitabilityTier.HIGH
+            elif score >= 60: return ProfitabilityTier.MEDIUM
+            else: return ProfitabilityTier.LOW
+
     @property
     def overall_score(self) -> float:
-        """Calculate overall niche score based on weighted metrics.
+            # Use numeric score fields
+            profitability_weight = 0.4
+            competition_weight = 0.3
+            market_size_weight = 0.2
+            confidence_weight = 0.1
+            adjusted_competition = 100 - self.competition_score_numeric
+            weighted_score = (
+                self.profitability_score_numeric * profitability_weight +
+                adjusted_competition * competition_weight +
+                self.market_size_score * market_size_weight +
+                self.confidence_score * confidence_weight
+            )
+            return round(weighted_score, 2)
+
+        # Removed `is_profitable` property as `profitability_tier` provides this classification
+   
         
-        Returns:
-            Weighted score combining profitability, competition, and market size
-        """
-        # Weights for different factors
-        profitability_weight = 0.4
-        competition_weight = 0.3  # Lower competition is better, so invert
-        market_size_weight = 0.2
-        confidence_weight = 0.1
-        
-        # Invert competition score (lower competition = higher score)
-        adjusted_competition = 100 - self.competition_score
-        
-        weighted_score = (
-            self.profitability_score * profitability_weight +
-            adjusted_competition * competition_weight +
-            self.market_size_score * market_size_weight +
-            self.confidence_score * confidence_weight
-        )
-        
-        return round(weighted_score, 2)
     
     @property
-    def is_profitable(self) -> bool:
-        """Check if niche meets profitability criteria.
-        
-        Returns:
-            True if niche is considered profitable
-        """
-        return (
-            self.profitability_score >= 50 and
-            self.competition_score <= 70 and
-            self.confidence_score >= 60
-        )
-    
-    @property
-    def risk_level(self) -> str:
-        """Assess risk level for this niche.
-        
-        Returns:
-            Risk level: 'low', 'medium', or 'high'
-        """
-        if self.competition_score <= 30 and self.confidence_score >= 80:
-            return "low"
-        elif self.competition_score <= 60 and self.confidence_score >= 60:
-            return "medium"
-        else:
-            return "high"
+    def risk_level(self) -> RiskLevel:
+            """Assess risk level for this niche, returning a RiskLevel enum."""
+            if (self.competition_score_numeric <= 30 and self.confidence_score >= 80 and
+                self.profitability_tier == ProfitabilityTier.HIGH):
+                return RiskLevel.LOW
+            elif (self.competition_score_numeric <= 60 and self.confidence_score >= 60 and
+                  self.profitability_tier in [ProfitabilityTier.HIGH, ProfitabilityTier.MEDIUM]):
+                return RiskLevel.MEDIUM
+            elif self.overall_score >= 40:
+                return RiskLevel.HIGH
+            else:
+                return RiskLevel.VERY_HIGH
     
     def get_primary_keywords(self, limit: int = 5) -> List[str]:
         """Get the most important keywords for this niche.
@@ -248,55 +207,30 @@ class Niche:
         self.seasonal_factors[month] = factor
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert niche to dictionary for serialization.
-        
-        Returns:
-            Dictionary representation of the niche
-        """
-        return {
-            "category": self.category,
-            "subcategory": self.subcategory,
-            "keywords": self.keywords,
-            "competition_score": self.competition_score,
-            "profitability_score": self.profitability_score,
-            "confidence_score": self.confidence_score,
-            "market_size_score": self.market_size_score,
-            "trend_direction": self.trend_direction,
-            "estimated_monthly_searches": self.estimated_monthly_searches,
-            "top_competitors": self.top_competitors,
-            "recommended_price_range": list(self.recommended_price_range),
-            "content_gaps": self.content_gaps,
-            "seasonal_factors": self.seasonal_factors,
-            "analysis_date": self.analysis_date.isoformat(),
-            "additional_data": self.additional_data,
-            "overall_score": self.overall_score,
-            "is_profitable": self.is_profitable,
-            "risk_level": self.risk_level,
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Niche":
-        """Create niche from dictionary.
-        
-        Args:
-            data: Dictionary containing niche data
-            
-        Returns:
-            Niche instance
-        """
-        # Handle datetime conversion
-        if "analysis_date" in data and isinstance(data["analysis_date"], str):
-            data["analysis_date"] = datetime.fromisoformat(data["analysis_date"])
-        
-        # Handle tuple conversion for price range
-        if "recommended_price_range" in data and isinstance(data["recommended_price_range"], list):
-            data["recommended_price_range"] = tuple(data["recommended_price_range"])
-        
-        # Remove computed properties
-        computed_fields = {"overall_score", "is_profitable", "risk_level"}
-        filtered_data = {k: v for k, v in data.items() if k not in computed_fields}
-        
-        return cls(**filtered_data)
+            data = {
+                "category": self.category,
+                "subcategory": self.subcategory,
+                "primary_keyword": self.primary_keyword,
+                "keywords": self.keywords,
+                "competition_score_numeric": self.competition_score_numeric,
+                "profitability_score_numeric": self.profitability_score_numeric,
+                "confidence_score": self.confidence_score,
+                "market_size_score": self.market_size_score,
+                "competition_level": self.competition_level.value, # Serialize enum value
+                "profitability_tier": self.profitability_tier.value, # Serialize enum value
+                "trend_analysis_data": self.trend_analysis_data.to_dict() if self.trend_analysis_data else None, # Serialize nested dataclass
+                "competitor_analysis_data": self.competitor_analysis_data,
+                "seasonal_factors": self.seasonal_factors,
+                "content_gaps": self.content_gaps,
+                "recommended_price_range": list(self.recommended_price_range),
+                "top_competitors": self.top_competitors,
+                "analysis_date": self.analysis_date.isoformat(),
+                "additional_data": self.additional_data,
+                "overall_score": self.overall_score, # Include computed properties
+                "risk_level": self.risk_level.value, # Include computed properties
+            }
+            return data
+
     
     def to_json(self) -> str:
         """Convert niche to JSON string.
@@ -307,26 +241,39 @@ class Niche:
         return json.dumps(self.to_dict(), indent=2)
     
     @classmethod
-    def from_json(cls, json_str: str) -> "Niche":
-        """Create niche from JSON string.
-        
-        Args:
-            json_str: JSON string containing niche data
-            
-        Returns:
-            Niche instance
-        """
-        data = json.loads(json_str)
-        return cls.from_dict(data)
-    
-    def __str__(self) -> str:
-        """String representation of the niche."""
-        return f"Niche(category='{self.category}', subcategory='{self.subcategory}', score={self.overall_score})"
-    
-    def __repr__(self) -> str:
-        """Detailed string representation of the niche."""
-        return (
-            f"Niche(category='{self.category}', subcategory='{self.subcategory}', "
-            f"keywords={len(self.keywords)}, profitability={self.profitability_score}, "
-            f"competition={self.competition_score}, overall_score={self.overall_score})"
-        )
+    def from_dict(cls, data: Dict[str, Any]) -> "Niche":
+            # Handle datetime, tuple conversions
+            if "analysis_date" in data and isinstance(data["analysis_date"], str):
+                data["analysis_date"] = datetime.fromisoformat(data["analysis_date"])
+            if "recommended_price_range" in data and isinstance(data["recommended_price_range"], list):
+                data["recommended_price_range"] = tuple(data["recommended_price_range"])
+
+            # Deserialize enums
+            if "competition_level" in data and isinstance(data["competition_level"], str):
+                data["competition_level"] = CompetitionLevel(data["competition_level"])
+            if "profitability_tier" in data and isinstance(data["profitability_tier"], str):
+                data["profitability_tier"] = ProfitabilityTier(data["profitability_tier"])
+            if "risk_level" in data and isinstance(data["risk_level"], str): # Deserialize if stored
+                data.pop("risk_level") # This is a computed property, remove before init
+
+            # Deserialize nested TrendAnalysis object
+            if "trend_analysis_data" in data and data["trend_analysis_data"] is not None:
+                data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis_data"])
+            elif "trend_analysis" in data: # Handle old naming if exists
+                 if data["trend_analysis"] is not None:
+                    data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis"])
+                 data.pop("trend_analysis") # Remove old key
+
+            # Rename old score keys if present
+            if 'competition_score' in data and 'competition_score_numeric' not in data:
+                data['competition_score_numeric'] = data.pop('competition_score')
+            if 'profitability_score' in data and 'profitability_score_numeric' not in data:
+                data['profitability_score_numeric'] = data.pop('profitability_score')
+
+            # Remove computed properties and old redundant fields before passing to constructor
+            computed_fields = {"overall_score"}
+            filtered_data = {k: v for k, v in data.items() if k not in computed_fields}
+            filtered_data.pop('trend_direction', None) # Remove if it was serialized
+            filtered_data.pop('estimated_monthly_searches', None) # Remove if it was serialized
+
+            return cls(**filtered_data)

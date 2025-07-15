@@ -30,7 +30,7 @@ import math
 from ...data.cache_manager import CacheManager
 from ...data.trends_client import TrendsClient
 from ...data.keepa_client import KeepaClient
-from ...models.niche_model import Niche
+from ...models.niche_model import Niche, CompetitionLevel, ProfitabilityTier, RiskLevel
 from ...models.trend_model import TrendAnalysis
 from .niche_discovery import NicheScorer
 from .trend_validation import TrendValidator
@@ -234,7 +234,7 @@ class StressTester:
         # Scenario-specific impact calculations
         if scenario_params.scenario == StressScenario.MARKET_SATURATION:
             # Higher competition score = more vulnerable to saturation
-            competition_factor = niche.competition_score / 100
+            competition_factor = niche.competition_score_numeric / 100
             base_impact *= (1 + competition_factor)
         
         elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
@@ -246,7 +246,7 @@ class StressTester:
         
         elif scenario_params.scenario == StressScenario.COMPETITIVE_FLOODING:
             # Lower competition score = more vulnerable to new competitors
-            competition_vulnerability = (100 - niche.competition_score) / 100
+            competition_vulnerability = (100 - niche.competition_score_numeric) / 100
             base_impact *= (1 + competition_vulnerability * 0.8)
         
         elif scenario_params.scenario == StressScenario.SEASONAL_CRASH:
@@ -288,7 +288,7 @@ class StressTester:
         base_recovery += profitability_factor * 0.2
         
         # Lower competition = easier recovery
-        competition_factor = (100 - niche.competition_score) / 100
+        competition_factor = (100 - niche.competition_score_numreic) / 100
         base_recovery += competition_factor * 0.15
         
         # Market size helps recovery
@@ -353,7 +353,7 @@ class StressTester:
         
         # Scenario-specific vulnerabilities
         if scenario_params.scenario == StressScenario.MARKET_SATURATION:
-            if niche.competition_score > 70:
+            if niche.competition_score_numeric > 70:
                 vulnerabilities.append("Already high competition makes saturation more likely")
             if niche.market_size_score < 40:
                 vulnerabilities.append("Small market size limits growth potential")
@@ -365,7 +365,7 @@ class StressTester:
                 vulnerabilities.append("Luxury/premium positioning vulnerable in downturns")
         
         elif scenario_params.scenario == StressScenario.COMPETITIVE_FLOODING:
-            if niche.competition_score < 50:
+            if niche.competition_score_numeric < 50:
                 vulnerabilities.append("Low competition barriers allow easy entry")
             if not niche.content_gaps:
                 vulnerabilities.append("Limited content differentiation opportunities")
@@ -520,7 +520,7 @@ async def niche_stress_test(
         overall_resilience = _calculate_overall_resilience(scenario_results)
         
         # Determine risk profile
-        risk_profile = _determine_risk_profile(scenario_results, overall_resilience)
+        overall_risk_profile = _determine_risk_profile(scenario_results, overall_resilience)
         
         # Identify critical vulnerabilities
         critical_vulnerabilities = _identify_critical_vulnerabilities(scenario_results)
@@ -541,7 +541,7 @@ async def niche_stress_test(
             baseline_niche=niche,
             scenario_results=scenario_results,
             overall_resilience=overall_resilience,
-            risk_profile=risk_profile,
+            risk_profile=overall_risk_profile,
             critical_vulnerabilities=critical_vulnerabilities,
             recommended_mitigations=recommended_mitigations,
             confidence_level=confidence_level,
@@ -553,17 +553,19 @@ async def niche_stress_test(
             "stress_test_summary": {
                 "niche_keyword": niche_keyword,
                 "overall_resilience": overall_resilience,
-                "risk_profile": risk_profile,
+                "risk_profile": overall_risk_profile.value, # Use enum .value
                 "scenarios_tested": len(scenario_results),
                 "confidence_level": confidence_level
             },
             "baseline_niche": {
                 "overall_score": niche.overall_score,
-                "profitability_score": niche.profitability_score,
-                "competition_score": niche.competition_score,
+                "profitability_score": niche.profitability_score_numeric, # Use numeric
+                "competition_score": niche.competition_score_numeric, # Use numeric
                 "market_size_score": niche.market_size_score,
-                "confidence_score": niche.confidence_score
-            },
+                "confidence_score": niche.confidence_score,
+                "competition_level": niche.competition_level.value, # Include categorical
+                "profitability_tier": niche.profitability_tier.value, # Include categorical
+    },
             "scenario_results": [
                 {
                     "scenario": result.scenario.value,
@@ -639,22 +641,25 @@ async def _create_niche_for_testing(
         # Create basic niche structure
         niche = Niche(
             category=f"{keyword} books",
-            primary_keyword=keyword,
-            related_keywords=[keyword, f"{keyword} guide", f"{keyword} tips"],
-            competition_score=random.uniform(30, 80),
-            profitability_score=random.uniform(40, 85),
+            primary_keyword=keyword, # Now a field in Niche
+            keywords=[keyword, f"{keyword} guide", f"{keyword} tips"],
+            # Assign numeric scores
+            competition_score_numeric=random.uniform(30, 80),
+            profitability_score_numeric=random.uniform(40, 85),
             market_size_score=random.uniform(35, 75),
             confidence_score=random.uniform(50, 90),
-            trend_analysis=trend_analysis.__dict__ if trend_analysis else None,
-            competitor_data=competitor_data,
-            price_range=(competitor_data["avg_price"] * 0.8, competitor_data["avg_price"] * 1.2),
+            # Pass TrendAnalysis object and competitor_data dict directly
+            trend_analysis_data=trend_analysis,
+            competitor_analysis_data=competitor_data,
+            recommended_price_range=(competitor_data["avg_price"] * 0.8, competitor_data["avg_price"] * 1.2),
             content_gaps=["beginner guides", "advanced techniques", "case studies"],
             seasonal_factors={"volatility": random.uniform(0.2, 0.8)},
-            last_updated=datetime.now()
+            # `competition_level` and `profitability_tier` will be set in Niche's __post_init__
         )
-        
         return niche
-    
+        
+        
+        
     except Exception as e:
         logger.error(f"Failed to create niche for testing: {e}")
         return None
@@ -680,20 +685,20 @@ def _calculate_overall_resilience(scenario_results: List[ScenarioResult]) -> flo
     return round(weighted_resilience / total_weight, 1)
 
 
-def _determine_risk_profile(scenario_results: List[ScenarioResult], overall_resilience: float) -> str:
+def _determine_risk_profile(scenario_results: List[ScenarioResult], overall_resilience: float) -> RiskLevel:
     """Determine overall risk profile."""
     # Count high-impact scenarios
     high_impact_scenarios = len([r for r in scenario_results if r.impact_percentage > 50])
     low_survival_scenarios = len([r for r in scenario_results if r.survival_probability < 0.7])
     
     if overall_resilience >= 80 and high_impact_scenarios <= 1:
-        return "low_risk"
+            return RiskLevel.LOW
     elif overall_resilience >= 60 and high_impact_scenarios <= 3:
-        return "medium_risk"
+            return RiskLevel.MEDIUM
     elif overall_resilience >= 40:
-        return "high_risk"
+            return RiskLevel.HIGH
     else:
-        return "very_high_risk"
+            return RiskLevel.VERY_HIGH
 
 
 def _identify_critical_vulnerabilities(scenario_results: List[ScenarioResult]) -> List[str]:

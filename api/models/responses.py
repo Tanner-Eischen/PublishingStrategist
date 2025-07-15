@@ -7,6 +7,8 @@ sent from the FastAPI backend to the React frontend.
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
+ # Import the new Enums from niche_model.py
+from src.kdp_strategist.models.niche_model import CompetitionLevel, ProfitabilityTier, RiskLevel
 
 
 class ChartData(BaseModel):
@@ -30,16 +32,21 @@ class AnalysisMetadata(BaseModel):
 
 
 class NicheData(BaseModel):
-    """Model for individual niche data."""
-    name: str = Field(..., description="Niche name")
-    score: float = Field(..., description="Profitability score (0-100)")
-    competition_level: str = Field(..., description="Competition level: low, medium, high")
-    search_volume: int = Field(..., description="Monthly search volume")
-    trend_direction: str = Field(..., description="Trend direction: rising, stable, declining")
-    keywords: List[str] = Field(default=[], description="Related keywords")
-    estimated_revenue: Optional[float] = Field(None, description="Estimated monthly revenue")
-    seasonality: Optional[Dict[str, float]] = Field(None, description="Seasonal patterns")
-    barriers_to_entry: List[str] = Field(default=[], description="Market barriers")
+        """Model for individual niche data."""
+        name: str = Field(..., description="Niche name (primary keyword)")
+        # Map to profitability_score_numeric
+        score: float = Field(..., description="Profitability score (0-100)")
+        # Use the Enum for competition_level
+        competition_level: CompetitionLevel = Field(..., description="Competition level: low, medium, high")
+        # Add profitability_tier field using the Enum
+        profitability_tier: ProfitabilityTier = Field(..., description="Profitability tier: low, medium, high")
+        risk_level: RiskLevel = Field(..., description="Overall risk level for the niche") # Add risk_level
+        search_volume: int = Field(..., description="Monthly search volume") # This will be derived
+        trend_direction: str = Field(..., description="Trend direction: rising, stable, declining") # This will be derived
+        keywords: List[str] = Field(default=[], description="Related keywords")
+        estimated_revenue: Optional[float] = Field(None, description="Estimated monthly revenue")
+        seasonality: Optional[Dict[str, float]] = Field(None, description="Seasonal patterns")
+        barriers_to_entry: List[str] = Field(default=[], description="Market barriers")
 
 
 class NicheDiscoveryResponse(BaseModel):
