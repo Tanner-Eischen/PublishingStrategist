@@ -16,9 +16,10 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 # Import existing MCP agent
-from kdp_strategist.agent.kdp_strategist_adapter import (
-    KDPStrategistAdapter as KDPStrategistAgent,
-)
+
+from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
+
+
 
 # Import API routers
 from .routers import niches, competitors, listings, trends, stress
@@ -111,7 +112,7 @@ app.include_router(stress.router, prefix="/api/stress", tags=["stress"])
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "kdp-strategist-api"}
+    return {"status": "healthy", "service": "kdp_strategist-api"}
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws")

@@ -13,7 +13,7 @@ Usage:
     python -m kdp_strategist.main
     
 Or as a console script (after installation):
-    kdp-strategist
+    kdp-_trategist
 """
 
 import asyncio

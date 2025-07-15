@@ -24,7 +24,7 @@ import re
 from ...data.cache_manager import CacheManager
 from ...data.keepa_client import KeepaClient
 from ...data.trends_client import TrendsClient
-from ...models.niche_model import Niche, CompetitionLevel, ProfitabilityTier
+from ...models.niche_model import Niche
 from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
 
 logger = logging.getLogger(__name__)
@@ -539,11 +539,11 @@ def _score_and_rank_niches(niche_candidates: List[Niche], min_score: float,
         
         # Set competition level
         if competitor_count <= 10:
-            niche.competition_level = CompetitionLevel.LOW
+            niche.competition_score = CompetitionLevel.LOW
         elif competitor_count <= 50:
-            niche.competition_level = CompetitionLevel.MEDIUM
+            niche.competition_score = CompetitionLevel.MEDIUM
         else:
-            niche.competition_level = CompetitionLevel.HIGH
+            niche.competition_score = CompetitionLevel.HIGH
         
         # Set profitability tier
         if profitability_score >= 80:

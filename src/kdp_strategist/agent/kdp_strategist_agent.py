@@ -29,9 +29,8 @@ from ..data.cache_manager import CacheManager, CacheConfig
 from ..data.keepa_client import KeepaClient, KeepaConfig
 from ..data.trends_client import TrendsClient, TrendsConfig
 from ..models.niche_model import Niche
-from ..models.listing_model import KDPListing
 from ..models.trend_model import TrendAnalysis
-from ..config.settings import Settings
+from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 

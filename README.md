@@ -97,19 +97,19 @@ LOG_LEVEL=INFO
 #### Start the MCP Server
 
 ```bash
-kdp-strategist
+kdp_strategist
 ```
 
 #### Interactive Mode (for testing)
 
 ```bash
-kdp-strategist --interactive
+kdp_strategist --interactive
 ```
 
 #### Custom Configuration
 
 ```bash
-kdp-strategist --config custom.env --log-level DEBUG
+kdp_strategist --config custom.env --log-level DEBUG
 ```
 
 ### Python Module
@@ -230,30 +230,7 @@ Represents comprehensive trend analysis:
 
 ## 🏗️ Architecture
 
-### Project Structure
 
-```
-PublishingStrategist/
-├── src/kdp-strategist/
-│   ├── agent/                 # MCP agent implementation
-│   │   ├── tools/            # Individual tool implementations
-│   │   └── kdp_strategist_agent.py
-│   ├── data/                 # Data layer and API clients
-│   │   ├── cache_manager.py
-│   │   ├── keepa_client.py
-│   │   └── trends_client.py
-│   ├── models/               # Data models
-│   │   ├── niche_model.py
-│   │   ├── listing_model.py
-│   │   └── trend_model.py
-│   └── main.py              # Main entry point
-├── config/                   # Configuration files
-│   ├── settings.py
-│   └── logging.conf
-├── requirements.txt
-├── setup.py
-└── README.md
-```
 
 ### Key Components
 
@@ -289,7 +266,7 @@ PublishingStrategist/
 Use the interactive mode to test individual tools:
 
 ```bash
-kdp-strategist --interactive
+kdp_strategist --interactive
 ```
 
 ### Tool Testing

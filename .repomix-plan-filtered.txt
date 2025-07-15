@@ -1,0 +1,2344 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files and files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where empty lines have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: src/kdp_strategist/models/niche_model.py, api/models/responses.py, src/kdp_strategist/agent/tools/niche_discovery.py, src/kdp_strategist/agent/tools/competitor_analysis.py, src/kdp_strategist/agent/tools/stress_testing.py
+- Files matching these patterns are excluded: .*.*, **/*.pbxproj, **/node_modules/**, **/dist/**, **/build/**, **/compile/**, **/*.spec.*, **/*.pyc, **/.env, **/.env.*, **/*.env, **/*.env.*, **/*.lock, **/*.lockb, **/package-lock.*, **/pnpm-lock.*, **/*.tsbuildinfo, **/certdata.txt
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Empty lines have been removed from all files
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+api/models/responses.py
+src/kdp_strategist/agent/tools/competitor_analysis.py
+src/kdp_strategist/agent/tools/niche_discovery.py
+src/kdp_strategist/agent/tools/stress_testing.py
+src/kdp_strategist/models/niche_model.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="api/models/responses.py">
+"""Response models for KDP Strategist API.
+These Pydantic models define the structure of API responses
+sent from the FastAPI backend to the React frontend.
+"""
+from typing import List, Optional, Dict, Any, Union
+from datetime import datetime
+from pydantic import BaseModel, Field
+class ChartData(BaseModel):
+    """Model for chart data visualization."""
+    type: str = Field(..., description="Chart type: line, bar, pie, scatter")
+    title: str = Field(..., description="Chart title")
+    data: List[Dict[str, Any]] = Field(..., description="Chart data points")
+    labels: Optional[List[str]] = Field(None, description="Chart labels")
+    colors: Optional[List[str]] = Field(None, description="Chart colors")
+    options: Optional[Dict[str, Any]] = Field(None, description="Chart options")
+class AnalysisMetadata(BaseModel):
+    """Metadata for analysis operations."""
+    execution_time: float = Field(..., description="Execution time in seconds")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
+    tool_version: str = Field(default="1.0.0", description="Tool version used")
+    data_sources: List[str] = Field(default=[], description="Data sources used")
+    cache_hit: bool = Field(default=False, description="Whether result was cached")
+    warnings: List[str] = Field(default=[], description="Analysis warnings")
+class NicheData(BaseModel):
+    """Model for individual niche data."""
+    name: str = Field(..., description="Niche name")
+    score: float = Field(..., description="Profitability score (0-100)")
+    competition_level: str = Field(..., description="Competition level: low, medium, high")
+    search_volume: int = Field(..., description="Monthly search volume")
+    trend_direction: str = Field(..., description="Trend direction: rising, stable, declining")
+    keywords: List[str] = Field(default=[], description="Related keywords")
+    estimated_revenue: Optional[float] = Field(None, description="Estimated monthly revenue")
+    seasonality: Optional[Dict[str, float]] = Field(None, description="Seasonal patterns")
+    barriers_to_entry: List[str] = Field(default=[], description="Market barriers")
+class NicheDiscoveryResponse(BaseModel):
+    """Response model for niche discovery."""
+    status: str = Field(default="success", description="Response status")
+    niches: List[NicheData] = Field(..., description="Discovered niches")
+    total_analyzed: int = Field(..., description="Total niches analyzed")
+    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
+    charts: List[ChartData] = Field(default=[], description="Visualization data")
+    export_options: List[str] = Field(default=["json", "csv"], description="Available export formats")
+    recommendations: List[str] = Field(default=[], description="Strategic recommendations")
+class CompetitorData(BaseModel):
+    """Model for individual competitor data."""
+    asin: str = Field(..., description="Amazon ASIN")
+    title: str = Field(..., description="Product title")
+    author: Optional[str] = Field(None, description="Author name")
+    price: Optional[float] = Field(None, description="Current price")
+    rank: Optional[int] = Field(None, description="Best seller rank")
+    rating: Optional[float] = Field(None, description="Average rating")
+    review_count: Optional[int] = Field(None, description="Number of reviews")
+    publication_date: Optional[str] = Field(None, description="Publication date")
+    page_count: Optional[int] = Field(None, description="Number of pages")
+    categories: List[str] = Field(default=[], description="Product categories")
+    keywords: List[str] = Field(default=[], description="Identified keywords")
+    strengths: List[str] = Field(default=[], description="Competitive strengths")
+    weaknesses: List[str] = Field(default=[], description="Competitive weaknesses")
+    market_share: Optional[float] = Field(None, description="Estimated market share")
+class CompetitorAnalysisResponse(BaseModel):
+    """Response model for competitor analysis."""
+    status: str = Field(default="success", description="Response status")
+    competitors: List[CompetitorData] = Field(..., description="Competitor analysis data")
+    market_overview: Dict[str, Any] = Field(..., description="Market overview statistics")
+    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
+    charts: List[ChartData] = Field(default=[], description="Visualization data")
+    export_options: List[str] = Field(default=["json", "csv"], description="Available export formats")
+    insights: List[str] = Field(default=[], description="Key insights")
+    opportunities: List[str] = Field(default=[], description="Market opportunities")
+class ListingData(BaseModel):
+    """Model for generated listing data."""
+    title: str = Field(..., description="Optimized book title")
+    subtitle: Optional[str] = Field(None, description="Book subtitle")
+    description: str = Field(..., description="Book description")
+    keywords: List[str] = Field(..., description="Optimized keywords")
+    categories: List[str] = Field(..., description="Recommended categories")
+    target_price: Optional[float] = Field(None, description="Recommended price")
+    bullet_points: List[str] = Field(default=[], description="Key selling points")
+    author_bio: Optional[str] = Field(None, description="Suggested author bio")
+    back_cover_text: Optional[str] = Field(None, description="Back cover description")
+    marketing_hooks: List[str] = Field(default=[], description="Marketing angles")
+class ListingGenerationResponse(BaseModel):
+    """Response model for listing generation."""
+    status: str = Field(default="success", description="Response status")
+    listing: ListingData = Field(..., description="Generated listing data")
+    optimization_score: float = Field(..., description="SEO optimization score (0-100)")
+    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
+    export_options: List[str] = Field(default=["json", "docx"], description="Available export formats")
+    seo_recommendations: List[str] = Field(default=[], description="SEO improvement suggestions")
+    compliance_check: Dict[str, bool] = Field(default={}, description="KDP compliance status")
+class TrendData(BaseModel):
+    """Model for trend analysis data."""
+    keyword: str = Field(..., description="Analyzed keyword")
+    trend_score: float = Field(..., description="Trend strength score (0-100)")
+    direction: str = Field(..., description="Trend direction: rising, stable, declining")
+    volatility: float = Field(..., description="Trend volatility (0-100)")
+    seasonal_pattern: Optional[Dict[str, float]] = Field(None, description="Seasonal patterns")
+    peak_months: List[str] = Field(default=[], description="Peak search months")
+    related_queries: List[str] = Field(default=[], description="Related search queries")
+    forecast: Optional[Dict[str, float]] = Field(None, description="3-month forecast")
+    confidence_level: float = Field(..., description="Forecast confidence (0-100)")
+class TrendValidationResponse(BaseModel):
+    """Response model for trend validation."""
+    status: str = Field(default="success", description="Response status")
+    trends: List[TrendData] = Field(..., description="Trend analysis data")
+    overall_trend_health: str = Field(..., description="Overall trend assessment")
+    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
+    charts: List[ChartData] = Field(default=[], description="Visualization data")
+    export_options: List[str] = Field(default=["json", "csv"], description="Available export formats")
+    recommendations: List[str] = Field(default=[], description="Strategic recommendations")
+    risk_factors: List[str] = Field(default=[], description="Identified risk factors")
+class StressTestScenario(BaseModel):
+    """Model for stress test scenario results."""
+    scenario: str = Field(..., description="Stress test scenario name")
+    severity: str = Field(..., description="Test severity level")
+    impact_score: float = Field(..., description="Impact score (0-100)")
+    probability: float = Field(..., description="Scenario probability (0-100)")
+    description: str = Field(..., description="Scenario description")
+    potential_losses: Optional[float] = Field(None, description="Estimated potential losses")
+    mitigation_strategies: List[str] = Field(default=[], description="Mitigation recommendations")
+    recovery_time: Optional[str] = Field(None, description="Estimated recovery time")
+class StressTestingResponse(BaseModel):
+    """Response model for stress testing."""
+    status: str = Field(default="success", description="Response status")
+    niche: str = Field(..., description="Tested niche")
+    overall_resilience: float = Field(..., description="Overall resilience score (0-100)")
+    risk_level: str = Field(..., description="Risk level: low, medium, high")
+    scenarios: List[StressTestScenario] = Field(..., description="Stress test scenarios")
+    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
+    charts: List[ChartData] = Field(default=[], description="Visualization data")
+    export_options: List[str] = Field(default=["json", "csv"], description="Available export formats")
+    recommendations: List[str] = Field(default=[], description="Risk mitigation recommendations")
+    contingency_plans: List[str] = Field(default=[], description="Contingency planning suggestions")
+class ExportResponse(BaseModel):
+    """Response model for export operations."""
+    status: str = Field(default="success", description="Export status")
+    download_url: str = Field(..., description="Download URL for exported file")
+    filename: str = Field(..., description="Generated filename")
+    file_size: int = Field(..., description="File size in bytes")
+    format: str = Field(..., description="Export format")
+    expires_at: datetime = Field(..., description="Download link expiration")
+class ErrorResponse(BaseModel):
+    """Response model for API errors."""
+    status: str = Field(default="error", description="Response status")
+    error_type: str = Field(..., description="Error type")
+    message: str = Field(..., description="Error message")
+    details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Error timestamp")
+    request_id: Optional[str] = Field(None, description="Request ID for tracking")
+class HealthResponse(BaseModel):
+    """Response model for health check."""
+    status: str = Field(default="healthy", description="Service status")
+    service: str = Field(default="kdp_strategist-api", description="Service name")
+    version: str = Field(default="1.0.0", description="API version")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Health check timestamp")
+    dependencies: Dict[str, str] = Field(default={}, description="Dependency status")
+    uptime: Optional[float] = Field(None, description="Service uptime in seconds")
+</file>
+
+<file path="src/kdp_strategist/agent/tools/competitor_analysis.py">
+"""Competitor Analysis Tool.
+Analyzes Amazon product competition using Keepa data to evaluate:
+- Product performance metrics (BSR, sales estimates, reviews)
+- Price analysis and trends
+- Market positioning and gaps
+- Competitive landscape assessment
+- Revenue and profitability estimates
+The tool provides detailed insights into:
+- Individual product analysis (ASIN-based)
+- Competitive benchmarking
+- Market opportunity identification
+- Strategic positioning recommendations
+"""
+import asyncio
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+from statistics import mean, median
+from ...data.cache_manager import CacheManager
+from ...data.keepa_client import KeepaClient, ProductData
+from ...models.niche_model import Niche
+logger = logging.getLogger(__name__)
+@dataclass
+class CompetitorMetrics:
+    """Metrics for a single competitor product."""
+    asin: str
+    title: str
+    current_price: float
+    bsr: Optional[int]
+    category: str
+    review_count: int
+    rating: float
+    estimated_monthly_sales: Optional[int]
+    estimated_monthly_revenue: Optional[float]
+    price_history: List[Tuple[datetime, float]]
+    bsr_history: List[Tuple[datetime, int]]
+    launch_date: Optional[datetime]
+    # Calculated metrics
+    price_stability: float = 0.0
+    sales_trend: str = "stable"
+    market_position: str = "unknown"
+    competitive_strength: float = 0.0
+@dataclass
+class MarketAnalysis:
+    """Overall market analysis for a niche or keyword."""
+    keyword: str
+    total_products: int
+    avg_price: float
+    price_range: Tuple[float, float]
+    avg_reviews: float
+    avg_rating: float
+    market_saturation: str
+    entry_barriers: str
+    opportunity_score: float
+    top_performers: List[CompetitorMetrics]
+    market_gaps: List[Dict[str, Any]]
+    recommendations: List[str]
+class CompetitorAnalyzer:
+    """Core analyzer for competitor data and market insights."""
+    # BSR to sales estimation (rough approximations)
+    BSR_SALES_MAPPING = {
+        1: 3000,
+        10: 1500,
+        100: 300,
+        1000: 50,
+        10000: 10,
+        100000: 2,
+        1000000: 0.5
+    }
+    @classmethod
+    def estimate_monthly_sales(cls, bsr: Optional[int], category: str = "Books") -> Optional[int]:
+        """Estimate monthly sales based on BSR."""
+        if not bsr or bsr <= 0:
+            return None
+        # Find closest BSR mapping
+        for threshold, sales in sorted(cls.BSR_SALES_MAPPING.items()):
+            if bsr <= threshold:
+                return sales
+        # For very high BSR (low sales)
+        return max(1, int(cls.BSR_SALES_MAPPING[1000000] * (1000000 / bsr)))
+    @classmethod
+    def calculate_price_stability(cls, price_history: List[Tuple[datetime, float]]) -> float:
+        """Calculate price stability score (0-100)."""
+        if len(price_history) < 2:
+            return 100.0
+        prices = [price for _, price in price_history]
+        if not prices:
+            return 100.0
+        # Calculate coefficient of variation
+        avg_price = mean(prices)
+        if avg_price == 0:
+            return 0.0
+        price_std = (sum((p - avg_price) ** 2 for p in prices) / len(prices)) ** 0.5
+        cv = price_std / avg_price
+        # Convert to stability score (lower CV = higher stability)
+        stability = max(0, 100 - (cv * 100))
+        return min(100, stability)
+    @classmethod
+    def analyze_sales_trend(cls, bsr_history: List[Tuple[datetime, int]]) -> str:
+        """Analyze sales trend from BSR history."""
+        if len(bsr_history) < 3:
+            return "insufficient_data"
+        # Sort by date
+        sorted_history = sorted(bsr_history, key=lambda x: x[0])
+        # Compare recent vs older BSR (lower BSR = better sales)
+        recent_bsr = mean([bsr for _, bsr in sorted_history[-3:]])
+        older_bsr = mean([bsr for _, bsr in sorted_history[:3]])
+        if recent_bsr < older_bsr * 0.8:  # Significant improvement
+            return "rising"
+        elif recent_bsr > older_bsr * 1.2:  # Significant decline
+            return "declining"
+        else:
+            return "stable"
+    @classmethod
+    def calculate_competitive_strength(cls, metrics: CompetitorMetrics) -> float:
+        """Calculate overall competitive strength score (0-100)."""
+        scores = []
+        # Review count score (more reviews = stronger position)
+        if metrics.review_count >= 1000:
+            review_score = 90
+        elif metrics.review_count >= 100:
+            review_score = 70
+        elif metrics.review_count >= 10:
+            review_score = 50
+        else:
+            review_score = 20
+        scores.append(review_score)
+        # Rating score
+        rating_score = (metrics.rating / 5.0) * 100 if metrics.rating else 50
+        scores.append(rating_score)
+        # Sales performance score (based on estimated sales)
+        if metrics.estimated_monthly_sales:
+            if metrics.estimated_monthly_sales >= 1000:
+                sales_score = 95
+            elif metrics.estimated_monthly_sales >= 100:
+                sales_score = 80
+            elif metrics.estimated_monthly_sales >= 10:
+                sales_score = 60
+            else:
+                sales_score = 30
+        else:
+            sales_score = 40
+        scores.append(sales_score)
+        # Price stability score
+        scores.append(metrics.price_stability)
+        # Sales trend score
+        trend_scores = {"rising": 90, "stable": 70, "declining": 30, "insufficient_data": 50}
+        scores.append(trend_scores.get(metrics.sales_trend, 50))
+        return mean(scores)
+    @classmethod
+    def identify_market_gaps(cls, competitors: List[CompetitorMetrics]) -> List[Dict[str, Any]]:
+        """Identify potential market gaps and opportunities."""
+        gaps = []
+        if not competitors:
+            return [{"type": "empty_market", "description": "No significant competition found", "opportunity": "high"}]
+        # Price gap analysis
+        prices = [c.current_price for c in competitors if c.current_price > 0]
+        if prices:
+            price_gaps = cls._find_price_gaps(prices)
+            gaps.extend(price_gaps)
+        # Quality gap analysis
+        low_rated = [c for c in competitors if c.rating < 3.5]
+        if len(low_rated) > len(competitors) * 0.3:  # 30% or more have low ratings
+            gaps.append({
+                "type": "quality_gap",
+                "description": "Many competitors have poor ratings",
+                "opportunity": "high",
+                "avg_rating": mean([c.rating for c in low_rated])
+            })
+        # Review gap analysis
+        low_review_count = [c for c in competitors if c.review_count < 50]
+        if len(low_review_count) > len(competitors) * 0.5:  # 50% or more have few reviews
+            gaps.append({
+                "type": "review_gap",
+                "description": "Many competitors have few reviews",
+                "opportunity": "medium",
+                "avg_reviews": mean([c.review_count for c in low_review_count])
+            })
+        # Content/positioning gaps (based on title analysis)
+        title_keywords = cls._analyze_title_keywords([c.title for c in competitors])
+        if len(title_keywords) < 10:  # Limited keyword diversity
+            gaps.append({
+                "type": "content_gap",
+                "description": "Limited keyword diversity in titles",
+                "opportunity": "medium",
+                "common_keywords": list(title_keywords.keys())[:5]
+            })
+        return gaps
+    @classmethod
+    def _find_price_gaps(cls, prices: List[float]) -> List[Dict[str, Any]]:
+        """Find gaps in price distribution."""
+        gaps = []
+        sorted_prices = sorted(prices)
+        # Look for significant gaps between price points
+        for i in range(len(sorted_prices) - 1):
+            current = sorted_prices[i]
+            next_price = sorted_prices[i + 1]
+            gap_size = next_price - current
+            # If gap is more than 50% of current price, it's significant
+            if gap_size > current * 0.5 and gap_size > 2.0:
+                gaps.append({
+                    "type": "price_gap",
+                    "description": f"Price gap between ${current:.2f} and ${next_price:.2f}",
+                    "opportunity": "medium" if gap_size < current else "high",
+                    "suggested_price": round(current + (gap_size / 2), 2)
+                })
+        return gaps
+    @classmethod
+    def _analyze_title_keywords(cls, titles: List[str]) -> Dict[str, int]:
+        """Analyze keyword frequency in competitor titles."""
+        keyword_counts = {}
+        for title in titles:
+            # Simple keyword extraction (split and clean)
+            words = title.lower().split()
+            for word in words:
+                # Clean word (remove punctuation)
+                clean_word = ''.join(c for c in word if c.isalnum())
+                if len(clean_word) > 2:  # Ignore very short words
+                    keyword_counts[clean_word] = keyword_counts.get(clean_word, 0) + 1
+        # Return words that appear in multiple titles
+        return {k: v for k, v in keyword_counts.items() if v > 1}
+async def analyze_competitor_asin(
+    keepa_client: KeepaClient,
+    cache_manager: CacheManager,
+    asin: str,
+    include_history: bool = True,
+    history_days: int = 90
+) -> Dict[str, Any]:
+    """Analyze a specific competitor product by ASIN.
+    Args:
+        keepa_client: Keepa API client
+        cache_manager: Cache manager for performance
+        asin: Amazon product ASIN to analyze
+        include_history: Whether to include price/BSR history
+        history_days: Number of days of history to analyze
+    Returns:
+        Dictionary containing detailed competitor analysis
+    """
+    logger.info(f"Analyzing competitor ASIN: {asin}")
+    try:
+        # Get product data from Keepa
+        product_data = await keepa_client.get_product_data(asin)
+        if not product_data:
+            return {
+                "error": "Product not found or data unavailable",
+                "asin": asin,
+                "analysis_timestamp": datetime.now().isoformat()
+            }
+        # Create competitor metrics
+        metrics = CompetitorMetrics(
+            asin=asin,
+            title=product_data.title or "Unknown",
+            current_price=product_data.current_price or 0.0,
+            bsr=product_data.bsr,
+            category=product_data.category or "Unknown",
+            review_count=product_data.review_count or 0,
+            rating=product_data.rating or 0.0,
+            estimated_monthly_sales=CompetitorAnalyzer.estimate_monthly_sales(product_data.bsr),
+            estimated_monthly_revenue=None,
+            price_history=[],
+            bsr_history=[],
+            launch_date=product_data.launch_date
+        )
+        # Calculate estimated revenue
+        if metrics.estimated_monthly_sales and metrics.current_price:
+            metrics.estimated_monthly_revenue = metrics.estimated_monthly_sales * metrics.current_price
+        # Get historical data if requested
+        if include_history:
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=history_days)
+            # Get price history
+            price_history = await keepa_client.get_price_history(asin, start_date, end_date)
+            metrics.price_history = price_history or []
+            # Get BSR history
+            bsr_history = await keepa_client.get_bsr_history(asin, start_date, end_date)
+            metrics.bsr_history = bsr_history or []
+            # Calculate derived metrics
+            metrics.price_stability = CompetitorAnalyzer.calculate_price_stability(metrics.price_history)
+            metrics.sales_trend = CompetitorAnalyzer.analyze_sales_trend(metrics.bsr_history)
+        # Calculate competitive strength
+        metrics.competitive_strength = CompetitorAnalyzer.calculate_competitive_strength(metrics)
+        # Determine market position
+        if metrics.competitive_strength >= 80:
+            metrics.market_position = "dominant"
+        elif metrics.competitive_strength >= 60:
+            metrics.market_position = "strong"
+        elif metrics.competitive_strength >= 40:
+            metrics.market_position = "moderate"
+        else:
+            metrics.market_position = "weak"
+        # Generate insights and recommendations
+        insights = _generate_competitor_insights(metrics)
+        recommendations = _generate_competitive_recommendations(metrics)
+        result = {
+            "asin": asin,
+            "basic_info": {
+                "title": metrics.title,
+                "category": metrics.category,
+                "current_price": metrics.current_price,
+                "launch_date": metrics.launch_date.isoformat() if metrics.launch_date else None
+            },
+            "performance_metrics": {
+                "bsr": metrics.bsr,
+                "review_count": metrics.review_count,
+                "rating": metrics.rating,
+                "estimated_monthly_sales": metrics.estimated_monthly_sales,
+                "estimated_monthly_revenue": metrics.estimated_monthly_revenue
+            },
+            "competitive_analysis": {
+                "competitive_strength": metrics.competitive_strength,
+                "market_position": metrics.market_position,
+                "price_stability": metrics.price_stability,
+                "sales_trend": metrics.sales_trend
+            },
+            "historical_data": {
+                "price_history_points": len(metrics.price_history),
+                "bsr_history_points": len(metrics.bsr_history),
+                "analysis_period_days": history_days if include_history else 0
+            },
+            "insights": insights,
+            "recommendations": recommendations,
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+        logger.info(f"Competitor analysis completed for ASIN: {asin}")
+        return result
+    except Exception as e:
+        logger.error(f"Competitor analysis failed for ASIN {asin}: {e}")
+        return {
+            "error": str(e),
+            "asin": asin,
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+async def analyze_market_competition(
+    keepa_client: KeepaClient,
+    cache_manager: CacheManager,
+    keyword: str,
+    category: Optional[str] = None,
+    max_products: int = 20,
+    min_reviews: int = 0
+) -> Dict[str, Any]:
+    """Analyze overall market competition for a keyword/niche.
+    Args:
+        keepa_client: Keepa API client
+        cache_manager: Cache manager for performance
+        keyword: Keyword to analyze competition for
+        category: Amazon category to focus on
+        max_products: Maximum number of products to analyze
+        min_reviews: Minimum review count filter
+    Returns:
+        Dictionary containing market competition analysis
+    """
+    logger.info(f"Analyzing market competition for keyword: {keyword}")
+    try:
+        # Search for products
+        products = await keepa_client.search_products(
+            keyword, 
+            category=category, 
+            limit=max_products
+        )
+        if not products:
+            return {
+                "keyword": keyword,
+                "total_products": 0,
+                "message": "No products found for this keyword",
+                "analysis_timestamp": datetime.now().isoformat()
+            }
+        # Filter products by minimum reviews
+        filtered_products = [p for p in products if (p.review_count or 0) >= min_reviews]
+        # Convert to competitor metrics
+        competitors = []
+        for product in filtered_products:
+            metrics = CompetitorMetrics(
+                asin=product.asin,
+                title=product.title or "Unknown",
+                current_price=product.current_price or 0.0,
+                bsr=product.bsr,
+                category=product.category or "Unknown",
+                review_count=product.review_count or 0,
+                rating=product.rating or 0.0,
+                estimated_monthly_sales=CompetitorAnalyzer.estimate_monthly_sales(product.bsr),
+                estimated_monthly_revenue=None,
+                price_history=[],
+                bsr_history=[],
+                launch_date=product.launch_date
+            )
+            # Calculate estimated revenue
+            if metrics.estimated_monthly_sales and metrics.current_price:
+                metrics.estimated_monthly_revenue = metrics.estimated_monthly_sales * metrics.current_price
+            # Calculate competitive strength (without historical data)
+            metrics.competitive_strength = CompetitorAnalyzer.calculate_competitive_strength(metrics)
+            competitors.append(metrics)
+        # Analyze market
+        market_analysis = _analyze_market_metrics(keyword, competitors)
+        # Generate market insights
+        market_insights = _generate_market_insights(market_analysis)
+        result = {
+            "keyword": keyword,
+            "category": category,
+            "total_products_found": len(products),
+            "analyzed_products": len(competitors),
+            "market_metrics": {
+                "avg_price": market_analysis.avg_price,
+                "price_range": {"min": market_analysis.price_range[0], "max": market_analysis.price_range[1]},
+                "avg_reviews": market_analysis.avg_reviews,
+                "avg_rating": market_analysis.avg_rating,
+                "market_saturation": market_analysis.market_saturation,
+                "entry_barriers": market_analysis.entry_barriers,
+                "opportunity_score": market_analysis.opportunity_score
+            },
+            "top_performers": [
+                {
+                    "asin": comp.asin,
+                    "title": comp.title[:100] + "..." if len(comp.title) > 100 else comp.title,
+                    "price": comp.current_price,
+                    "reviews": comp.review_count,
+                    "rating": comp.rating,
+                    "competitive_strength": comp.competitive_strength,
+                    "estimated_monthly_sales": comp.estimated_monthly_sales
+                }
+                for comp in market_analysis.top_performers
+            ],
+            "market_gaps": market_analysis.market_gaps,
+            "insights": market_insights,
+            "recommendations": market_analysis.recommendations,
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+        logger.info(f"Market competition analysis completed for keyword: {keyword}")
+        return result
+    except Exception as e:
+        logger.error(f"Market competition analysis failed for keyword {keyword}: {e}")
+        return {
+            "error": str(e),
+            "keyword": keyword,
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+def _generate_competitor_insights(metrics: CompetitorMetrics) -> List[str]:
+    """Generate insights about a specific competitor."""
+    insights = []
+    # Performance insights
+    if metrics.estimated_monthly_sales:
+        if metrics.estimated_monthly_sales >= 1000:
+            insights.append(f"High-performing product with estimated {metrics.estimated_monthly_sales:,} monthly sales")
+        elif metrics.estimated_monthly_sales >= 100:
+            insights.append(f"Moderate performer with estimated {metrics.estimated_monthly_sales:,} monthly sales")
+        else:
+            insights.append(f"Low sales volume with estimated {metrics.estimated_monthly_sales:,} monthly sales")
+    # Review insights
+    if metrics.review_count >= 1000:
+        insights.append("Well-established product with strong review base")
+    elif metrics.review_count >= 100:
+        insights.append("Moderately established with decent review count")
+    elif metrics.review_count < 10:
+        insights.append("New or low-visibility product with few reviews")
+    # Rating insights
+    if metrics.rating >= 4.5:
+        insights.append("Excellent customer satisfaction with high ratings")
+    elif metrics.rating >= 4.0:
+        insights.append("Good customer satisfaction")
+    elif metrics.rating < 3.5:
+        insights.append("Poor customer satisfaction - potential opportunity")
+    # Price insights
+    if metrics.current_price >= 20:
+        insights.append("Premium pricing strategy")
+    elif metrics.current_price <= 5:
+        insights.append("Budget/low-cost positioning")
+    # Trend insights
+    if metrics.sales_trend == "rising":
+        insights.append("Sales momentum is increasing")
+    elif metrics.sales_trend == "declining":
+        insights.append("Sales appear to be declining")
+    return insights
+def _generate_competitive_recommendations(metrics: CompetitorMetrics) -> List[str]:
+    """Generate competitive recommendations based on analysis."""
+    recommendations = []
+    # Competitive positioning
+    if metrics.competitive_strength < 50:
+        recommendations.append("Weak competitor - consider direct competition with better quality/marketing")
+    elif metrics.competitive_strength > 80:
+        recommendations.append("Strong competitor - avoid direct competition, find differentiation angle")
+    # Pricing recommendations
+    if metrics.current_price > 15:
+        recommendations.append("Consider lower-priced alternative to capture price-sensitive customers")
+    elif metrics.current_price < 8:
+        recommendations.append("Opportunity for premium positioning with higher quality")
+    # Quality recommendations
+    if metrics.rating < 4.0:
+        recommendations.append("Focus on quality improvements to outperform this competitor")
+    # Market entry recommendations
+    if metrics.review_count < 50:
+        recommendations.append("Low review count suggests market entry opportunity")
+    return recommendations
+def _analyze_market_metrics(keyword: str, competitors: List[CompetitorMetrics]) -> MarketAnalysis:
+    """Analyze overall market metrics."""
+    if not competitors:
+        return MarketAnalysis(
+            keyword=keyword,
+            total_products=0,
+            avg_price=0,
+            price_range=(0, 0),
+            avg_reviews=0,
+            avg_rating=0,
+            market_saturation="unknown",
+            entry_barriers="unknown",
+            opportunity_score=50,
+            top_performers=[],
+            market_gaps=[],
+            recommendations=[]
+        )
+    # Calculate basic metrics
+    prices = [c.current_price for c in competitors if c.current_price > 0]
+    reviews = [c.review_count for c in competitors]
+    ratings = [c.rating for c in competitors if c.rating > 0]
+    avg_price = mean(prices) if prices else 0
+    price_range = (min(prices), max(prices)) if prices else (0, 0)
+    avg_reviews = mean(reviews) if reviews else 0
+    avg_rating = mean(ratings) if ratings else 0
+    # Determine market saturation
+    high_review_products = len([c for c in competitors if c.review_count >= 100])
+    if high_review_products >= len(competitors) * 0.7:
+        market_saturation = "high"
+    elif high_review_products >= len(competitors) * 0.3:
+        market_saturation = "medium"
+    else:
+        market_saturation = "low"
+    # Determine entry barriers
+    strong_competitors = len([c for c in competitors if c.competitive_strength >= 70])
+    if strong_competitors >= len(competitors) * 0.5:
+        entry_barriers = "high"
+    elif strong_competitors >= len(competitors) * 0.2:
+        entry_barriers = "medium"
+    else:
+        entry_barriers = "low"
+    # Calculate opportunity score
+    opportunity_score = _calculate_opportunity_score(competitors, market_saturation, entry_barriers)
+    # Get top performers
+    top_performers = sorted(competitors, key=lambda c: c.competitive_strength, reverse=True)[:5]
+    # Identify market gaps
+    market_gaps = CompetitorAnalyzer.identify_market_gaps(competitors)
+    # Generate recommendations
+    recommendations = _generate_market_recommendations(competitors, market_saturation, entry_barriers)
+    return MarketAnalysis(
+        keyword=keyword,
+        total_products=len(competitors),
+        avg_price=avg_price,
+        price_range=price_range,
+        avg_reviews=avg_reviews,
+        avg_rating=avg_rating,
+        market_saturation=market_saturation,
+        entry_barriers=entry_barriers,
+        opportunity_score=opportunity_score,
+        top_performers=top_performers,
+        market_gaps=market_gaps,
+        recommendations=recommendations
+    )
+def _calculate_opportunity_score(competitors: List[CompetitorMetrics], 
+                                saturation: str, barriers: str) -> float:
+    """Calculate market opportunity score (0-100)."""
+    base_score = 50
+    # Adjust for market saturation
+    saturation_adjustments = {"low": 20, "medium": 0, "high": -20}
+    base_score += saturation_adjustments.get(saturation, 0)
+    # Adjust for entry barriers
+    barrier_adjustments = {"low": 15, "medium": 0, "high": -15}
+    base_score += barrier_adjustments.get(barriers, 0)
+    # Adjust for competitor quality
+    avg_strength = mean([c.competitive_strength for c in competitors]) if competitors else 50
+    if avg_strength < 40:
+        base_score += 15  # Weak competition = opportunity
+    elif avg_strength > 70:
+        base_score -= 10  # Strong competition = challenge
+    # Adjust for market gaps
+    gaps = CompetitorAnalyzer.identify_market_gaps(competitors)
+    high_opportunity_gaps = len([g for g in gaps if g.get("opportunity") == "high"])
+    base_score += high_opportunity_gaps * 5
+    return max(0, min(100, base_score))
+def _generate_market_insights(analysis: MarketAnalysis) -> List[str]:
+    """Generate market-level insights."""
+    insights = []
+    # Market size insights
+    if analysis.total_products >= 50:
+        insights.append(f"Large market with {analysis.total_products} competing products")
+    elif analysis.total_products >= 10:
+        insights.append(f"Moderate market size with {analysis.total_products} competitors")
+    else:
+        insights.append(f"Small market with only {analysis.total_products} competitors")
+    # Price insights
+    if analysis.avg_price >= 15:
+        insights.append(f"Premium market with average price of ${analysis.avg_price:.2f}")
+    elif analysis.avg_price <= 8:
+        insights.append(f"Budget market with average price of ${analysis.avg_price:.2f}")
+    # Competition insights
+    if analysis.market_saturation == "high":
+        insights.append("Highly saturated market with established competitors")
+    elif analysis.market_saturation == "low":
+        insights.append("Emerging market with growth opportunities")
+    # Opportunity insights
+    if analysis.opportunity_score >= 70:
+        insights.append("High opportunity market with good entry potential")
+    elif analysis.opportunity_score <= 40:
+        insights.append("Challenging market with limited opportunities")
+    return insights
+def _generate_market_recommendations(competitors: List[CompetitorMetrics], 
+                                   saturation: str, barriers: str) -> List[str]:
+    """Generate market-level recommendations."""
+    recommendations = []
+    # Entry strategy recommendations
+    if barriers == "low" and saturation == "low":
+        recommendations.append("Excellent market entry opportunity - move quickly to establish position")
+    elif barriers == "high":
+        recommendations.append("Consider niche differentiation or unique value proposition")
+    # Pricing strategy recommendations
+    if competitors:
+        prices = [c.current_price for c in competitors if c.current_price > 0]
+        if prices:
+            min_price, max_price = min(prices), max(prices)
+            if max_price - min_price > 10:
+                recommendations.append(f"Wide price range (${min_price:.2f}-${max_price:.2f}) suggests segmentation opportunities")
+    # Quality strategy recommendations
+    low_rated = [c for c in competitors if c.rating < 4.0]
+    if len(low_rated) > len(competitors) * 0.3:
+        recommendations.append("Focus on quality to differentiate from poorly-rated competitors")
+    # Market timing recommendations
+    if saturation == "low":
+        recommendations.append("Early market - focus on establishing brand and capturing market share")
+    elif saturation == "high":
+        recommendations.append("Mature market - focus on differentiation and niche targeting")
+    return recommendations
+</file>
+
+<file path="src/kdp_strategist/agent/tools/niche_discovery.py">
+"""Niche Discovery Tool.
+Finds profitable publishing niches by analyzing:
+- Keyword variations and search volume
+- Google Trends data for market interest
+- Amazon competition analysis
+- Market opportunity scoring
+- Content gap identification
+The tool combines multiple data sources to identify niches with:
+- High market demand (Google Trends)
+- Manageable competition (Amazon/Keepa data)
+- Sustainable growth potential
+- Clear monetization opportunities
+"""
+import asyncio
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime
+import itertools
+import re
+from ...data.cache_manager import CacheManager
+from ...data.keepa_client import KeepaClient
+from ...data.trends_client import TrendsClient
+from ...models.niche_model import Niche
+from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
+logger = logging.getLogger(__name__)
+class NicheScorer:
+    """Scoring engine for niche profitability analysis."""
+    # Scoring weights
+    WEIGHTS = {
+        "trend_score": 0.25,
+        "competition_score": 0.30,
+        "market_size_score": 0.20,
+        "seasonality_score": 0.15,
+        "content_gap_score": 0.10
+    }
+    @classmethod
+    def calculate_profitability_score(cls, niche_data: Dict[str, Any]) -> float:
+        """Calculate overall profitability score (0-100)."""
+        scores = {
+            "trend_score": cls._score_trend_strength(niche_data.get("trend_analysis")),
+            "competition_score": cls._score_competition_level(niche_data.get("competition_data")),
+            "market_size_score": cls._score_market_size(niche_data.get("market_metrics")),
+            "seasonality_score": cls._score_seasonality(niche_data.get("seasonal_patterns")),
+            "content_gap_score": cls._score_content_gaps(niche_data.get("content_analysis"))
+        }
+        # Calculate weighted score
+        total_score = sum(score * cls.WEIGHTS[key] for key, score in scores.items() if score is not None)
+        weight_sum = sum(cls.WEIGHTS[key] for key, score in scores.items() if score is not None)
+        return (total_score / weight_sum * 100) if weight_sum > 0 else 0
+    @staticmethod
+    def _score_trend_strength(trend_analysis: Optional[TrendAnalysis]) -> Optional[float]:
+        """Score based on trend strength and direction."""
+        if not trend_analysis:
+            return None
+        base_score = trend_analysis.trend_score
+        # Adjust for trend direction
+        if trend_analysis.direction == TrendDirection.RISING:
+            base_score *= 1.2
+        elif trend_analysis.direction == TrendDirection.DECLINING:
+            base_score *= 0.7
+        # Adjust for trend strength
+        strength_multipliers = {
+            TrendStrength.VERY_STRONG: 1.3,
+            TrendStrength.STRONG: 1.1,
+            TrendStrength.MODERATE: 1.0,
+            TrendStrength.WEAK: 0.8,
+            TrendStrength.VERY_WEAK: 0.5
+        }
+        multiplier = strength_multipliers.get(trend_analysis.strength, 1.0)
+        return min(100, base_score * multiplier)
+    @staticmethod
+    def _score_competition_level(competition_data: Optional[Dict[str, Any]]) -> Optional[float]:
+        """Score based on competition analysis."""
+        if not competition_data:
+            return None
+        # Lower competition = higher score
+        competitor_count = competition_data.get("competitor_count", 0)
+        avg_reviews = competition_data.get("avg_review_count", 0)
+        avg_rating = competition_data.get("avg_rating", 0)
+        price_range = competition_data.get("price_range", {})
+        # Base score inversely related to competition
+        if competitor_count == 0:
+            base_score = 100
+        elif competitor_count < 10:
+            base_score = 90
+        elif competitor_count < 50:
+            base_score = 70
+        elif competitor_count < 100:
+            base_score = 50
+        else:
+            base_score = 30
+        # Adjust for review saturation
+        if avg_reviews > 1000:
+            base_score *= 0.6  # High review saturation
+        elif avg_reviews > 100:
+            base_score *= 0.8
+        elif avg_reviews < 10:
+            base_score *= 1.2  # Low review saturation = opportunity
+        # Adjust for rating quality
+        if avg_rating < 3.5:
+            base_score *= 1.3  # Poor ratings = opportunity
+        elif avg_rating > 4.5:
+            base_score *= 0.9  # High ratings = strong competition
+        return min(100, base_score)
+    @staticmethod
+    def _score_market_size(market_metrics: Optional[Dict[str, Any]]) -> Optional[float]:
+        """Score based on market size indicators."""
+        if not market_metrics:
+            return None
+        search_volume = market_metrics.get("estimated_search_volume", 0)
+        related_keywords = market_metrics.get("related_keyword_count", 0)
+        category_size = market_metrics.get("category_size_score", 50)
+        # Score based on search volume
+        if search_volume > 10000:
+            volume_score = 90
+        elif search_volume > 1000:
+            volume_score = 70
+        elif search_volume > 100:
+            volume_score = 50
+        else:
+            volume_score = 30
+        # Adjust for keyword diversity
+        keyword_multiplier = min(1.5, 1 + (related_keywords / 100))
+        # Combine scores
+        final_score = (volume_score * 0.6 + category_size * 0.4) * keyword_multiplier
+        return min(100, final_score)
+    @staticmethod
+    def _score_seasonality(seasonal_patterns: Optional[Dict[str, Any]]) -> Optional[float]:
+        """Score based on seasonal stability."""
+        if not seasonal_patterns:
+            return 75  # Neutral score if no data
+        seasonality_strength = seasonal_patterns.get("seasonality_strength", 0)
+        peak_months = seasonal_patterns.get("peak_months", [])
+        consistency = seasonal_patterns.get("consistency_score", 50)
+        # Lower seasonality = higher score (more stable)
+        if seasonality_strength < 10:
+            base_score = 95  # Very stable
+        elif seasonality_strength < 25:
+            base_score = 80  # Moderately stable
+        elif seasonality_strength < 50:
+            base_score = 60  # Some seasonality
+        else:
+            base_score = 40  # Highly seasonal
+        # Adjust for consistency
+        consistency_multiplier = consistency / 100
+        return base_score * consistency_multiplier
+    @staticmethod
+    def _score_content_gaps(content_analysis: Optional[Dict[str, Any]]) -> Optional[float]:
+        """Score based on content gap opportunities."""
+        if not content_analysis:
+            return None
+        gap_count = content_analysis.get("identified_gaps", 0)
+        content_quality = content_analysis.get("avg_content_quality", 50)
+        differentiation_opportunities = content_analysis.get("differentiation_score", 50)
+        # More gaps = higher opportunity
+        if gap_count > 10:
+            gap_score = 90
+        elif gap_count > 5:
+            gap_score = 70
+        elif gap_count > 2:
+            gap_score = 50
+        else:
+            gap_score = 30
+        # Lower content quality = higher opportunity
+        quality_multiplier = (100 - content_quality) / 100
+        # Combine scores
+        final_score = (gap_score * 0.6 + differentiation_opportunities * 0.4) * (1 + quality_multiplier)
+        return min(100, final_score)
+class KeywordExpander:
+    """Expands base keywords into niche-specific variations."""
+    # Common keyword modifiers for publishing niches
+    MODIFIERS = {
+        "journal": ["journal", "notebook", "diary", "planner", "log", "tracker", "organizer"],
+        "audience": ["kids", "children", "teens", "adults", "seniors", "women", "men", "professionals"],
+        "purpose": ["daily", "weekly", "monthly", "travel", "work", "personal", "business", "creative"],
+        "style": ["lined", "dotted", "blank", "guided", "prompted", "illustrated", "minimalist"],
+        "theme": ["gratitude", "mindfulness", "fitness", "productivity", "self-care", "goals"]
+    }
+    @classmethod
+    def expand_keywords(cls, base_keywords: List[str], max_combinations: int = 100) -> List[str]:
+        """Expand base keywords into variations."""
+        expanded = set(base_keywords)
+        for base_keyword in base_keywords:
+            # Add single modifier combinations
+            for category, modifiers in cls.MODIFIERS.items():
+                for modifier in modifiers:
+                    # Prefix combinations
+                    expanded.add(f"{modifier} {base_keyword}")
+                    # Suffix combinations
+                    expanded.add(f"{base_keyword} {modifier}")
+            # Add two-modifier combinations (limited)
+            modifier_pairs = list(itertools.combinations(cls.MODIFIERS.keys(), 2))
+            for cat1, cat2 in modifier_pairs[:5]:  # Limit combinations
+                for mod1 in cls.MODIFIERS[cat1][:3]:  # Top 3 from each category
+                    for mod2 in cls.MODIFIERS[cat2][:3]:
+                        expanded.add(f"{mod1} {base_keyword} {mod2}")
+                        if len(expanded) >= max_combinations:
+                            break
+                    if len(expanded) >= max_combinations:
+                        break
+                if len(expanded) >= max_combinations:
+                    break
+        # Clean and filter keywords
+        cleaned = []
+        for keyword in expanded:
+            # Basic cleaning
+            keyword = re.sub(r'\s+', ' ', keyword.strip().lower())
+            # Filter out very long keywords
+            if len(keyword) <= 100 and len(keyword.split()) <= 6:
+                cleaned.append(keyword)
+        return cleaned[:max_combinations]
+async def find_profitable_niches(
+    trends_client: TrendsClient,
+    keepa_client: Optional[KeepaClient],
+    cache_manager: CacheManager,
+    base_keywords: List[str],
+    categories: Optional[List[str]] = None,
+    min_profitability_score: float = 60,
+    max_competition_level: str = "medium",
+    limit: int = 10
+) -> Dict[str, Any]:
+    """Find profitable publishing niches.
+    Args:
+        trends_client: Google Trends client
+        keepa_client: Keepa API client (optional)
+        cache_manager: Cache manager for performance
+        base_keywords: Starting keywords for niche discovery
+        categories: Amazon categories to focus on
+        min_profitability_score: Minimum score threshold (0-100)
+        max_competition_level: Maximum competition level (low/medium/high)
+        limit: Maximum number of niches to return
+    Returns:
+        Dictionary containing discovered niches and analysis metadata
+    """
+    logger.info(f"Starting niche discovery for keywords: {base_keywords}")
+    try:
+        # Step 1: Expand keywords
+        expanded_keywords = KeywordExpander.expand_keywords(base_keywords, max_combinations=200)
+        logger.info(f"Expanded to {len(expanded_keywords)} keyword variations")
+        # Step 2: Analyze trends for expanded keywords (batch processing)
+        trend_analyses = await _batch_analyze_trends(trends_client, expanded_keywords[:50])  # Limit for performance
+        # Step 3: Filter keywords with good trend potential
+        promising_keywords = _filter_promising_trends(trend_analyses, min_trend_score=30)
+        logger.info(f"Found {len(promising_keywords)} keywords with good trend potential")
+        # Step 4: Analyze competition for promising keywords
+        competition_data = await _analyze_competition(keepa_client, promising_keywords, categories)
+        # Step 5: Generate niche candidates
+        niche_candidates = await _generate_niche_candidates(
+            promising_keywords, trend_analyses, competition_data, categories
+        )
+        # Step 6: Score and rank niches
+        scored_niches = _score_and_rank_niches(niche_candidates, min_profitability_score, max_competition_level)
+        # Step 7: Return top niches
+        top_niches = scored_niches[:limit]
+        result = {
+            "niches": [niche.to_dict() for niche in top_niches],
+            "analysis_metadata": {
+                "base_keywords": base_keywords,
+                "expanded_keywords_count": len(expanded_keywords),
+                "analyzed_trends_count": len(trend_analyses),
+                "promising_keywords_count": len(promising_keywords),
+                "niche_candidates_count": len(niche_candidates),
+                "final_niches_count": len(top_niches),
+                "min_profitability_score": min_profitability_score,
+                "max_competition_level": max_competition_level,
+                "analysis_timestamp": datetime.now().isoformat()
+            },
+            "recommendations": _generate_recommendations(top_niches, scored_niches)
+        }
+        logger.info(f"Niche discovery completed. Found {len(top_niches)} profitable niches")
+        return result
+    except Exception as e:
+        logger.error(f"Niche discovery failed: {e}")
+        raise
+async def _batch_analyze_trends(trends_client: TrendsClient, keywords: List[str]) -> Dict[str, TrendAnalysis]:
+    """Analyze trends for multiple keywords efficiently."""
+    trend_analyses = {}
+    # Process in smaller batches to respect rate limits
+    batch_size = 5
+    for i in range(0, len(keywords), batch_size):
+        batch = keywords[i:i + batch_size]
+        # Process batch concurrently
+        tasks = []
+        for keyword in batch:
+            task = trends_client.get_trend_analysis(keyword, timeframe="today 12-m")
+            tasks.append(task)
+        # Wait for batch completion
+        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Process results
+        for keyword, result in zip(batch, batch_results):
+            if isinstance(result, TrendAnalysis):
+                trend_analyses[keyword] = result
+            elif isinstance(result, Exception):
+                logger.warning(f"Failed to analyze trend for '{keyword}': {result}")
+        # Rate limiting delay between batches
+        if i + batch_size < len(keywords):
+            await asyncio.sleep(2)
+    return trend_analyses
+def _filter_promising_trends(trend_analyses: Dict[str, TrendAnalysis], min_trend_score: float = 30) -> List[str]:
+    """Filter keywords with promising trend characteristics."""
+    promising = []
+    for keyword, analysis in trend_analyses.items():
+        # Basic trend score filter
+        if analysis.trend_score < min_trend_score:
+            continue
+        # Avoid declining trends
+        if analysis.direction == TrendDirection.DECLINING and analysis.trend_score < 50:
+            continue
+        # Require minimum confidence
+        if analysis.confidence_level < 0.3:
+            continue
+        promising.append(keyword)
+    return promising
+async def _analyze_competition(keepa_client: Optional[KeepaClient], keywords: List[str], 
+                              categories: Optional[List[str]]) -> Dict[str, Dict[str, Any]]:
+    """Analyze competition for keywords using Amazon/Keepa data."""
+    competition_data = {}
+    if not keepa_client:
+        logger.warning("No Keepa client available - using simulated competition data")
+        # Return simulated data for development
+        for keyword in keywords:
+            competition_data[keyword] = {
+                "competitor_count": len(keyword.split()) * 20,  # Rough estimate
+                "avg_review_count": 50,
+                "avg_rating": 4.0,
+                "price_range": {"min": 5.99, "max": 19.99, "avg": 12.99},
+                "estimated": True
+            }
+        return competition_data
+    # Analyze competition using Keepa search
+    for keyword in keywords[:20]:  # Limit for performance
+        try:
+            # Search for products
+            products = keepa_client.search_products(keyword, limit=20)
+            if products:
+                # Analyze competition metrics
+                review_counts = [p.review_count for p in products if p.review_count]
+                ratings = [p.rating for p in products if p.rating]
+                prices = [p.current_price for p in products if p.current_price]
+                competition_data[keyword] = {
+                    "competitor_count": len(products),
+                    "avg_review_count": sum(review_counts) / len(review_counts) if review_counts else 0,
+                    "avg_rating": sum(ratings) / len(ratings) if ratings else 0,
+                    "price_range": {
+                        "min": min(prices) if prices else 0,
+                        "max": max(prices) if prices else 0,
+                        "avg": sum(prices) / len(prices) if prices else 0
+                    },
+                    "estimated": False
+                }
+            else:
+                # No competition found
+                competition_data[keyword] = {
+                    "competitor_count": 0,
+                    "avg_review_count": 0,
+                    "avg_rating": 0,
+                    "price_range": {"min": 0, "max": 0, "avg": 0},
+                    "estimated": False
+                }
+        except Exception as e:
+            logger.warning(f"Failed to analyze competition for '{keyword}': {e}")
+            continue
+    return competition_data
+async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[str, TrendAnalysis],
+                                    competition_data: Dict[str, Dict[str, Any]], 
+                                    categories: Optional[List[str]]) -> List[Niche]:
+    """Generate niche candidates from analyzed data."""
+    niche_candidates = []
+    for keyword in keywords:
+        trend_analysis = trend_analyses.get(keyword)
+        competition = competition_data.get(keyword, {})
+        if not trend_analysis:
+            continue
+        # Create niche object
+        niche = Niche(
+            category=categories[0] if categories else "Books & Journals",
+            primary_keyword=keyword,
+            keywords=[keyword] + trend_analysis.related_queries[:10],
+            trend_analysis=trend_analysis,
+            competitor_data={
+                "count": competition.get("competitor_count", 0),
+                "avg_reviews": competition.get("avg_review_count", 0),
+                "avg_rating": competition.get("avg_rating", 0),
+                "price_analysis": competition.get("price_range", {})
+            },
+            market_size_score=_estimate_market_size(trend_analysis, competition),
+            seasonal_factors=trend_analysis.seasonal_patterns,
+            last_updated=datetime.now()
+        )
+        niche_candidates.append(niche)
+    return niche_candidates
+def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: Dict[str, Any]) -> float:
+    """Estimate market size score based on trend and competition data."""
+    base_score = trend_analysis.trend_score
+    # Adjust for competition level
+    competitor_count = competition_data.get("competitor_count", 0)
+    if competitor_count == 0:
+        competition_multiplier = 1.5  # No competition = larger opportunity
+    elif competitor_count < 10:
+        competition_multiplier = 1.2
+    elif competitor_count < 50:
+        competition_multiplier = 1.0
+    else:
+        competition_multiplier = 0.8
+    # Adjust for trend strength
+    if trend_analysis.strength in [TrendStrength.STRONG, TrendStrength.VERY_STRONG]:
+        strength_multiplier = 1.3
+    elif trend_analysis.strength == TrendStrength.MODERATE:
+        strength_multiplier = 1.0
+    else:
+        strength_multiplier = 0.7
+    return min(100, base_score * competition_multiplier * strength_multiplier)
+def _score_and_rank_niches(niche_candidates: List[Niche], min_score: float, 
+                           max_competition: str) -> List[Niche]:
+    """Score and rank niche candidates."""
+    scored_niches = []
+    competition_limits = {
+        "low": 20,
+        "medium": 50,
+        "high": 100
+    }
+    max_competitors = competition_limits.get(max_competition, 50)
+    for niche in niche_candidates:
+        # Check competition filter
+        competitor_count = niche.competitor_data.get("count", 0)
+        if competitor_count > max_competitors:
+            continue
+        # Calculate profitability score
+        niche_data = {
+            "trend_analysis": niche.trend_analysis,
+            "competition_data": niche.competitor_data,
+            "market_metrics": {"estimated_search_volume": niche.market_size_score * 100},
+            "seasonal_patterns": niche.seasonal_factors,
+            "content_analysis": {"identified_gaps": 5}  # Placeholder
+        }
+        profitability_score = NicheScorer.calculate_profitability_score(niche_data)
+        niche.profitability_score = profitability_score
+        # Set competition level
+        if competitor_count <= 10:
+            niche.competition_score = CompetitionLevel.LOW
+        elif competitor_count <= 50:
+            niche.competition_score = CompetitionLevel.MEDIUM
+        else:
+            niche.competition_score = CompetitionLevel.HIGH
+        # Set profitability tier
+        if profitability_score >= 80:
+            niche.profitability_tier = ProfitabilityTier.HIGH
+        elif profitability_score >= 60:
+            niche.profitability_tier = ProfitabilityTier.MEDIUM
+        else:
+            niche.profitability_tier = ProfitabilityTier.LOW
+        # Apply minimum score filter
+        if profitability_score >= min_score:
+            scored_niches.append(niche)
+    # Sort by profitability score (descending)
+    scored_niches.sort(key=lambda n: n.profitability_score, reverse=True)
+    return scored_niches
+def _generate_recommendations(top_niches: List[Niche], all_scored_niches: List[Niche]) -> Dict[str, Any]:
+    """Generate actionable recommendations based on niche analysis."""
+    if not top_niches:
+        return {"message": "No profitable niches found with current criteria"}
+    best_niche = top_niches[0]
+    recommendations = {
+        "primary_recommendation": {
+            "niche": best_niche.primary_keyword,
+            "score": best_niche.profitability_score,
+            "reason": f"Highest profitability score with {best_niche.competition_level.value} competition"
+        },
+        "quick_wins": [],
+        "long_term_opportunities": [],
+        "market_insights": {
+            "avg_profitability_score": sum(n.profitability_score for n in all_scored_niches) / len(all_scored_niches),
+            "competition_distribution": {
+                "low": len([n for n in all_scored_niches if n.competition_level == CompetitionLevel.LOW]),
+                "medium": len([n for n in all_scored_niches if n.competition_level == CompetitionLevel.MEDIUM]),
+                "high": len([n for n in all_scored_niches if n.competition_level == CompetitionLevel.HIGH])
+            }
+        }
+    }
+    # Identify quick wins (low competition, decent score)
+    for niche in top_niches[:5]:
+        if niche.competition_level == CompetitionLevel.LOW and niche.profitability_score >= 60:
+            recommendations["quick_wins"].append({
+                "niche": niche.primary_keyword,
+                "score": niche.profitability_score,
+                "competitors": niche.competitor_data.get("count", 0)
+            })
+    # Identify long-term opportunities (high potential, manageable competition)
+    for niche in top_niches[:10]:
+        if (niche.profitability_score >= 75 and 
+            niche.trend_analysis and 
+            niche.trend_analysis.direction == TrendDirection.RISING):
+            recommendations["long_term_opportunities"].append({
+                "niche": niche.primary_keyword,
+                "score": niche.profitability_score,
+                "trend_direction": niche.trend_analysis.direction.value
+            })
+    return recommendations
+</file>
+
+<file path="src/kdp_strategist/agent/tools/stress_testing.py">
+"""Stress Testing Tool.
+Performs comprehensive stress testing of niches to assess:
+- Market resilience under various scenarios
+- Competition pressure tolerance
+- Economic downturn impact
+- Seasonal volatility effects
+- Platform algorithm changes
+- Consumer behavior shifts
+The tool simulates multiple stress scenarios including:
+- Market saturation scenarios
+- Economic recession impacts
+- Competitive flooding
+- Seasonal demand crashes
+- Platform policy changes
+- Consumer trend shifts
+"""
+import asyncio
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+from enum import Enum
+from statistics import mean, stdev
+import random
+import math
+from ...data.cache_manager import CacheManager
+from ...data.trends_client import TrendsClient
+from ...data.keepa_client import KeepaClient
+from ...models.niche_model import Niche
+from ...models.trend_model import TrendAnalysis
+from .niche_discovery import NicheScorer
+from .trend_validation import TrendValidator
+logger = logging.getLogger(__name__)
+class StressScenario(Enum):
+    """Types of stress test scenarios."""
+    MARKET_SATURATION = "market_saturation"
+    ECONOMIC_DOWNTURN = "economic_downturn"
+    COMPETITIVE_FLOODING = "competitive_flooding"
+    SEASONAL_CRASH = "seasonal_crash"
+    PLATFORM_CHANGES = "platform_changes"
+    TREND_REVERSAL = "trend_reversal"
+    CONSUMER_SHIFT = "consumer_shift"
+    SUPPLY_CHAIN_DISRUPTION = "supply_chain_disruption"
+@dataclass
+class StressTestParameters:
+    """Parameters for stress test scenarios."""
+    scenario: StressScenario
+    severity: float  # 0.1 (mild) to 1.0 (severe)
+    duration_months: int  # How long the stress lasts
+    recovery_months: int  # How long to recover
+    probability: float  # Likelihood of scenario occurring
+    description: str
+@dataclass
+class ScenarioResult:
+    """Result of a single stress test scenario."""
+    scenario: StressScenario
+    parameters: StressTestParameters
+    initial_score: float
+    stressed_score: float
+    recovery_score: float
+    impact_percentage: float
+    resilience_score: float
+    survival_probability: float
+    key_vulnerabilities: List[str]
+    mitigation_strategies: List[str]
+@dataclass
+class StressTestReport:
+    """Comprehensive stress test report."""
+    niche_keyword: str
+    baseline_niche: Niche
+    scenario_results: List[ScenarioResult]
+    overall_resilience: float
+    risk_profile: str
+    critical_vulnerabilities: List[str]
+    recommended_mitigations: List[str]
+    confidence_level: float
+    test_timestamp: datetime
+class StressTester:
+    """Core stress testing engine."""
+    # Stress test scenarios with default parameters
+    DEFAULT_SCENARIOS = {
+        StressScenario.MARKET_SATURATION: StressTestParameters(
+            scenario=StressScenario.MARKET_SATURATION,
+            severity=0.7,
+            duration_months=6,
+            recovery_months=12,
+            probability=0.3,
+            description="Market becomes oversaturated with competitors"
+        ),
+        StressScenario.ECONOMIC_DOWNTURN: StressTestParameters(
+            scenario=StressScenario.ECONOMIC_DOWNTURN,
+            severity=0.6,
+            duration_months=8,
+            recovery_months=18,
+            probability=0.2,
+            description="Economic recession reduces consumer spending"
+        ),
+        StressScenario.COMPETITIVE_FLOODING: StressTestParameters(
+            scenario=StressScenario.COMPETITIVE_FLOODING,
+            severity=0.8,
+            duration_months=4,
+            recovery_months=8,
+            probability=0.4,
+            description="Sudden influx of new competitors"
+        ),
+        StressScenario.SEASONAL_CRASH: StressTestParameters(
+            scenario=StressScenario.SEASONAL_CRASH,
+            severity=0.9,
+            duration_months=3,
+            recovery_months=6,
+            probability=0.5,
+            description="Severe seasonal demand drop"
+        ),
+        StressScenario.PLATFORM_CHANGES: StressTestParameters(
+            scenario=StressScenario.PLATFORM_CHANGES,
+            severity=0.5,
+            duration_months=3,
+            recovery_months=9,
+            probability=0.3,
+            description="Amazon algorithm or policy changes"
+        ),
+        StressScenario.TREND_REVERSAL: StressTestParameters(
+            scenario=StressScenario.TREND_REVERSAL,
+            severity=0.8,
+            duration_months=12,
+            recovery_months=24,
+            probability=0.25,
+            description="Major trend reversal or consumer preference shift"
+        ),
+        StressScenario.CONSUMER_SHIFT: StressTestParameters(
+            scenario=StressScenario.CONSUMER_SHIFT,
+            severity=0.6,
+            duration_months=9,
+            recovery_months=15,
+            probability=0.35,
+            description="Consumer behavior and preferences change"
+        ),
+        StressScenario.SUPPLY_CHAIN_DISRUPTION: StressTestParameters(
+            scenario=StressScenario.SUPPLY_CHAIN_DISRUPTION,
+            severity=0.4,
+            duration_months=2,
+            recovery_months=4,
+            probability=0.15,
+            description="Supply chain or production disruptions"
+        )
+    }
+    @classmethod
+    def simulate_scenario(
+        cls,
+        niche: Niche,
+        scenario_params: StressTestParameters,
+        trend_analysis: Optional[TrendAnalysis] = None
+    ) -> ScenarioResult:
+        """Simulate a single stress test scenario."""
+        initial_score = niche.overall_score
+        # Calculate stress impact based on scenario type and niche characteristics
+        stress_impact = cls._calculate_stress_impact(
+            niche, scenario_params, trend_analysis
+        )
+        # Apply stress to niche score
+        stressed_score = initial_score * (1 - stress_impact)
+        stressed_score = max(0, stressed_score)
+        # Calculate recovery score
+        recovery_factor = cls._calculate_recovery_factor(
+            niche, scenario_params, stress_impact
+        )
+        recovery_score = stressed_score + (initial_score - stressed_score) * recovery_factor
+        recovery_score = min(initial_score, recovery_score)
+        # Calculate impact percentage
+        impact_percentage = (initial_score - stressed_score) / initial_score * 100
+        # Calculate resilience score (how well it maintains performance)
+        resilience_score = (stressed_score / initial_score) * 100
+        # Calculate survival probability
+        survival_probability = cls._calculate_survival_probability(
+            stressed_score, recovery_score, scenario_params
+        )
+        # Identify vulnerabilities
+        vulnerabilities = cls._identify_vulnerabilities(
+            niche, scenario_params, stress_impact
+        )
+        # Generate mitigation strategies
+        mitigations = cls._generate_mitigation_strategies(
+            niche, scenario_params, vulnerabilities
+        )
+        return ScenarioResult(
+            scenario=scenario_params.scenario,
+            parameters=scenario_params,
+            initial_score=round(initial_score, 1),
+            stressed_score=round(stressed_score, 1),
+            recovery_score=round(recovery_score, 1),
+            impact_percentage=round(impact_percentage, 1),
+            resilience_score=round(resilience_score, 1),
+            survival_probability=round(survival_probability, 2),
+            key_vulnerabilities=vulnerabilities,
+            mitigation_strategies=mitigations
+        )
+    @classmethod
+    def _calculate_stress_impact(
+        cls,
+        niche: Niche,
+        scenario_params: StressTestParameters,
+        trend_analysis: Optional[TrendAnalysis] = None
+    ) -> float:
+        """Calculate the impact of stress on the niche."""
+        base_impact = scenario_params.severity * 0.5  # Base 50% max impact
+        # Scenario-specific impact calculations
+        if scenario_params.scenario == StressScenario.MARKET_SATURATION:
+            # Higher competition score = more vulnerable to saturation
+            competition_factor = niche.competition_score / 100
+            base_impact *= (1 + competition_factor)
+        elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
+            # Higher price points more vulnerable to economic stress
+            if niche.price_range:
+                avg_price = (niche.price_range[0] + niche.price_range[1]) / 2
+                price_factor = min(1.0, avg_price / 50)  # Normalize around $50
+                base_impact *= (1 + price_factor * 0.5)
+        elif scenario_params.scenario == StressScenario.COMPETITIVE_FLOODING:
+            # Lower competition score = more vulnerable to new competitors
+            competition_vulnerability = (100 - niche.competition_score) / 100
+            base_impact *= (1 + competition_vulnerability * 0.8)
+        elif scenario_params.scenario == StressScenario.SEASONAL_CRASH:
+            # Higher seasonal factors = more vulnerable
+            seasonal_factor = 0.5  # Default moderate seasonality
+            if niche.seasonal_factors:
+                seasonal_factor = niche.seasonal_factors.get("volatility", 0.5)
+            base_impact *= (1 + seasonal_factor)
+        elif scenario_params.scenario == StressScenario.TREND_REVERSAL:
+            # Trend-dependent niches more vulnerable
+            if trend_analysis:
+                trend_dependency = trend_analysis.trend_score / 100
+                base_impact *= (1 + trend_dependency * 0.7)
+        elif scenario_params.scenario == StressScenario.CONSUMER_SHIFT:
+            # Niche-specific consumer dependency
+            market_size_factor = (100 - niche.market_size_score) / 100
+            base_impact *= (1 + market_size_factor * 0.6)
+        # Apply duration factor (longer stress = more impact)
+        duration_factor = min(1.5, scenario_params.duration_months / 12)
+        base_impact *= duration_factor
+        return min(0.95, base_impact)  # Cap at 95% impact
+    @classmethod
+    def _calculate_recovery_factor(
+        cls,
+        niche: Niche,
+        scenario_params: StressTestParameters,
+        stress_impact: float
+    ) -> float:
+        """Calculate how well the niche recovers from stress."""
+        base_recovery = 0.7  # Base 70% recovery
+        # Higher profitability = better recovery
+        profitability_factor = niche.profitability_score / 100
+        base_recovery += profitability_factor * 0.2
+        # Lower competition = easier recovery
+        competition_factor = (100 - niche.competition_score) / 100
+        base_recovery += competition_factor * 0.15
+        # Market size helps recovery
+        market_factor = niche.market_size_score / 100
+        base_recovery += market_factor * 0.1
+        # Recovery time factor (longer recovery time = better eventual recovery)
+        time_factor = min(1.2, scenario_params.recovery_months / 12)
+        base_recovery *= time_factor
+        # Severe stress reduces recovery potential
+        stress_factor = 1 - (stress_impact * 0.3)
+        base_recovery *= stress_factor
+        return min(1.0, max(0.1, base_recovery))
+    @classmethod
+    def _calculate_survival_probability(
+        cls,
+        stressed_score: float,
+        recovery_score: float,
+        scenario_params: StressTestParameters
+    ) -> float:
+        """Calculate probability of surviving the stress scenario."""
+        # Base survival on stressed score
+        if stressed_score >= 60:
+            base_survival = 0.95
+        elif stressed_score >= 40:
+            base_survival = 0.8
+        elif stressed_score >= 20:
+            base_survival = 0.6
+        elif stressed_score >= 10:
+            base_survival = 0.3
+        else:
+            base_survival = 0.1
+        # Factor in recovery potential
+        recovery_factor = recovery_score / 100
+        base_survival += recovery_factor * 0.2
+        # Factor in scenario severity and duration
+        severity_penalty = scenario_params.severity * 0.15
+        duration_penalty = min(0.2, scenario_params.duration_months / 24)
+        final_survival = base_survival - severity_penalty - duration_penalty
+        return min(1.0, max(0.05, final_survival))
+    @classmethod
+    def _identify_vulnerabilities(
+        cls,
+        niche: Niche,
+        scenario_params: StressTestParameters,
+        stress_impact: float
+    ) -> List[str]:
+        """Identify key vulnerabilities exposed by the stress test."""
+        vulnerabilities = []
+        # High stress impact indicates vulnerability
+        if stress_impact > 0.7:
+            vulnerabilities.append(f"High vulnerability to {scenario_params.scenario.value}")
+        # Scenario-specific vulnerabilities
+        if scenario_params.scenario == StressScenario.MARKET_SATURATION:
+            if niche.competition_score > 70:
+                vulnerabilities.append("Already high competition makes saturation more likely")
+            if niche.market_size_score < 40:
+                vulnerabilities.append("Small market size limits growth potential")
+        elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
+            if niche.price_range and niche.price_range[1] > 30:
+                vulnerabilities.append("Higher price point vulnerable to economic stress")
+            if "luxury" in niche.category.lower() or "premium" in niche.category.lower():
+                vulnerabilities.append("Luxury/premium positioning vulnerable in downturns")
+        elif scenario_params.scenario == StressScenario.COMPETITIVE_FLOODING:
+            if niche.competition_score < 50:
+                vulnerabilities.append("Low competition barriers allow easy entry")
+            if not niche.content_gaps:
+                vulnerabilities.append("Limited content differentiation opportunities")
+        elif scenario_params.scenario == StressScenario.SEASONAL_CRASH:
+            if niche.seasonal_factors and niche.seasonal_factors.get("volatility", 0) > 0.6:
+                vulnerabilities.append("High seasonal volatility increases crash risk")
+        # General vulnerabilities
+        if niche.confidence_score < 60:
+            vulnerabilities.append("Low confidence in niche data increases uncertainty")
+        if niche.profitability_score < 50:
+            vulnerabilities.append("Low profitability reduces stress resilience")
+        return vulnerabilities
+    @classmethod
+    def _generate_mitigation_strategies(
+        cls,
+        niche: Niche,
+        scenario_params: StressTestParameters,
+        vulnerabilities: List[str]
+    ) -> List[str]:
+        """Generate mitigation strategies for identified vulnerabilities."""
+        strategies = []
+        # Scenario-specific strategies
+        if scenario_params.scenario == StressScenario.MARKET_SATURATION:
+            strategies.extend([
+                "Develop unique content angles to differentiate from competitors",
+                "Focus on sub-niches with less competition",
+                "Build strong brand recognition early"
+            ])
+        elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
+            strategies.extend([
+                "Consider lower-priced product options",
+                "Emphasize value proposition and practical benefits",
+                "Diversify into recession-resistant sub-topics"
+            ])
+        elif scenario_params.scenario == StressScenario.COMPETITIVE_FLOODING:
+            strategies.extend([
+                "Establish first-mover advantage quickly",
+                "Create high-quality content that's hard to replicate",
+                "Build customer loyalty through superior value"
+            ])
+        elif scenario_params.scenario == StressScenario.SEASONAL_CRASH:
+            strategies.extend([
+                "Develop year-round content strategy",
+                "Create evergreen content to smooth seasonal variations",
+                "Plan inventory and marketing around seasonal patterns"
+            ])
+        elif scenario_params.scenario == StressScenario.PLATFORM_CHANGES:
+            strategies.extend([
+                "Diversify across multiple platforms",
+                "Stay updated on platform policy changes",
+                "Build direct customer relationships"
+            ])
+        elif scenario_params.scenario == StressScenario.TREND_REVERSAL:
+            strategies.extend([
+                "Monitor trend indicators closely",
+                "Prepare pivot strategies for related niches",
+                "Build adaptable content frameworks"
+            ])
+        # General mitigation strategies
+        if niche.profitability_score < 60:
+            strategies.append("Focus on improving profit margins through premium positioning")
+        if niche.market_size_score < 50:
+            strategies.append("Expand target market through related keywords and topics")
+        if niche.competition_score > 70:
+            strategies.append("Identify and exploit competitor weaknesses")
+        return strategies[:5]  # Limit to top 5 strategies
+async def niche_stress_test(
+    trends_client: TrendsClient,
+    keepa_client: KeepaClient,
+    cache_manager: CacheManager,
+    niche_keyword: str,
+    custom_scenarios: Optional[List[StressTestParameters]] = None,
+    include_all_scenarios: bool = True
+) -> Dict[str, Any]:
+    """Perform comprehensive stress testing on a niche.
+    Args:
+        trends_client: Google Trends client
+        keepa_client: Keepa API client
+        cache_manager: Cache manager
+        niche_keyword: Primary keyword for the niche
+        custom_scenarios: Custom stress test scenarios
+        include_all_scenarios: Whether to test all default scenarios
+    Returns:
+        Dictionary containing comprehensive stress test results
+    """
+    logger.info(f"Starting stress test for niche: {niche_keyword}")
+    try:
+        # First, we need to create/retrieve the niche data
+        niche = await _create_niche_for_testing(
+            trends_client, keepa_client, cache_manager, niche_keyword
+        )
+        if not niche:
+            return {
+                "error": "Unable to create niche data for stress testing",
+                "niche_keyword": niche_keyword,
+                "test_timestamp": datetime.now().isoformat()
+            }
+        # Get trend analysis for enhanced testing
+        trend_analysis = None
+        try:
+            trend_analysis = await trends_client.get_trend_analysis(niche_keyword)
+        except Exception as e:
+            logger.warning(f"Could not get trend analysis: {e}")
+        # Determine scenarios to test
+        scenarios_to_test = []
+        if include_all_scenarios:
+            scenarios_to_test.extend(StressTester.DEFAULT_SCENARIOS.values())
+        if custom_scenarios:
+            scenarios_to_test.extend(custom_scenarios)
+        if not scenarios_to_test:
+            scenarios_to_test = list(StressTester.DEFAULT_SCENARIOS.values())
+        # Run stress tests for each scenario
+        scenario_results = []
+        for scenario_params in scenarios_to_test:
+            try:
+                result = StressTester.simulate_scenario(
+                    niche, scenario_params, trend_analysis
+                )
+                scenario_results.append(result)
+                logger.debug(f"Completed stress test for scenario: {scenario_params.scenario.value}")
+            except Exception as e:
+                logger.error(f"Failed stress test for scenario {scenario_params.scenario.value}: {e}")
+        # Calculate overall resilience
+        overall_resilience = _calculate_overall_resilience(scenario_results)
+        # Determine risk profile
+        risk_profile = _determine_risk_profile(scenario_results, overall_resilience)
+        # Identify critical vulnerabilities
+        critical_vulnerabilities = _identify_critical_vulnerabilities(scenario_results)
+        # Generate recommended mitigations
+        recommended_mitigations = _generate_recommended_mitigations(
+            scenario_results, critical_vulnerabilities
+        )
+        # Calculate confidence level
+        confidence_level = _calculate_test_confidence(
+            niche, trend_analysis, len(scenario_results)
+        )
+        # Create comprehensive report
+        stress_test_report = StressTestReport(
+            niche_keyword=niche_keyword,
+            baseline_niche=niche,
+            scenario_results=scenario_results,
+            overall_resilience=overall_resilience,
+            risk_profile=risk_profile,
+            critical_vulnerabilities=critical_vulnerabilities,
+            recommended_mitigations=recommended_mitigations,
+            confidence_level=confidence_level,
+            test_timestamp=datetime.now()
+        )
+        # Compile final result
+        result = {
+            "stress_test_summary": {
+                "niche_keyword": niche_keyword,
+                "overall_resilience": overall_resilience,
+                "risk_profile": risk_profile,
+                "scenarios_tested": len(scenario_results),
+                "confidence_level": confidence_level
+            },
+            "baseline_niche": {
+                "overall_score": niche.overall_score,
+                "profitability_score": niche.profitability_score,
+                "competition_score": niche.competition_score,
+                "market_size_score": niche.market_size_score,
+                "confidence_score": niche.confidence_score
+            },
+            "scenario_results": [
+                {
+                    "scenario": result.scenario.value,
+                    "severity": result.parameters.severity,
+                    "probability": result.parameters.probability,
+                    "initial_score": result.initial_score,
+                    "stressed_score": result.stressed_score,
+                    "recovery_score": result.recovery_score,
+                    "impact_percentage": result.impact_percentage,
+                    "resilience_score": result.resilience_score,
+                    "survival_probability": result.survival_probability,
+                    "key_vulnerabilities": result.key_vulnerabilities,
+                    "mitigation_strategies": result.mitigation_strategies,
+                    "description": result.parameters.description
+                }
+                for result in scenario_results
+            ],
+            "risk_analysis": {
+                "critical_vulnerabilities": critical_vulnerabilities,
+                "highest_risk_scenarios": _get_highest_risk_scenarios(scenario_results),
+                "lowest_resilience_scenarios": _get_lowest_resilience_scenarios(scenario_results),
+                "survival_analysis": _analyze_survival_probabilities(scenario_results)
+            },
+            "recommendations": {
+                "immediate_actions": recommended_mitigations[:3],
+                "strategic_mitigations": recommended_mitigations[3:],
+                "monitoring_priorities": _get_monitoring_priorities(scenario_results),
+                "contingency_planning": _get_contingency_recommendations(scenario_results)
+            },
+            "test_metadata": {
+                "test_timestamp": stress_test_report.test_timestamp.isoformat(),
+                "confidence_level": confidence_level,
+                "data_quality": {
+                    "has_trend_data": trend_analysis is not None,
+                    "niche_data_completeness": _assess_niche_data_completeness(niche)
+                }
+            }
+        }
+        logger.info(f"Stress test completed for niche: {niche_keyword}")
+        return result
+    except Exception as e:
+        logger.error(f"Stress test failed for {niche_keyword}: {e}")
+        return {
+            "error": str(e),
+            "niche_keyword": niche_keyword,
+            "test_timestamp": datetime.now().isoformat()
+        }
+async def _create_niche_for_testing(
+    trends_client: TrendsClient,
+    keepa_client: KeepaClient,
+    cache_manager: CacheManager,
+    keyword: str
+) -> Optional[Niche]:
+    """Create a niche object for stress testing."""
+    try:
+        # Get trend analysis
+        trend_analysis = await trends_client.get_trend_analysis(keyword)
+        # Simulate competitor analysis (in real implementation, this would use actual data)
+        competitor_data = {
+            "total_competitors": random.randint(50, 500),
+            "avg_price": random.uniform(10, 50),
+            "top_competitor_sales": random.randint(100, 1000)
+        }
+        # Calculate scores using NicheScorer
+        scorer = NicheScorer()
+        # Create basic niche structure
+        niche = Niche(
+            category=f"{keyword} books",
+            primary_keyword=keyword,
+            related_keywords=[keyword, f"{keyword} guide", f"{keyword} tips"],
+            competition_score=random.uniform(30, 80),
+            profitability_score=random.uniform(40, 85),
+            market_size_score=random.uniform(35, 75),
+            confidence_score=random.uniform(50, 90),
+            trend_analysis=trend_analysis.__dict__ if trend_analysis else None,
+            competitor_data=competitor_data,
+            price_range=(competitor_data["avg_price"] * 0.8, competitor_data["avg_price"] * 1.2),
+            content_gaps=["beginner guides", "advanced techniques", "case studies"],
+            seasonal_factors={"volatility": random.uniform(0.2, 0.8)},
+            last_updated=datetime.now()
+        )
+        return niche
+    except Exception as e:
+        logger.error(f"Failed to create niche for testing: {e}")
+        return None
+def _calculate_overall_resilience(scenario_results: List[ScenarioResult]) -> float:
+    """Calculate overall resilience score across all scenarios."""
+    if not scenario_results:
+        return 0.0
+    # Weight by scenario probability
+    weighted_resilience = 0.0
+    total_weight = 0.0
+    for result in scenario_results:
+        weight = result.parameters.probability
+        weighted_resilience += result.resilience_score * weight
+        total_weight += weight
+    if total_weight == 0:
+        return mean([r.resilience_score for r in scenario_results])
+    return round(weighted_resilience / total_weight, 1)
+def _determine_risk_profile(scenario_results: List[ScenarioResult], overall_resilience: float) -> str:
+    """Determine overall risk profile."""
+    # Count high-impact scenarios
+    high_impact_scenarios = len([r for r in scenario_results if r.impact_percentage > 50])
+    low_survival_scenarios = len([r for r in scenario_results if r.survival_probability < 0.7])
+    if overall_resilience >= 80 and high_impact_scenarios <= 1:
+        return "low_risk"
+    elif overall_resilience >= 60 and high_impact_scenarios <= 3:
+        return "medium_risk"
+    elif overall_resilience >= 40:
+        return "high_risk"
+    else:
+        return "very_high_risk"
+def _identify_critical_vulnerabilities(scenario_results: List[ScenarioResult]) -> List[str]:
+    """Identify the most critical vulnerabilities across all scenarios."""
+    vulnerability_counts = {}
+    # Count vulnerability mentions across scenarios
+    for result in scenario_results:
+        for vulnerability in result.key_vulnerabilities:
+            vulnerability_counts[vulnerability] = vulnerability_counts.get(vulnerability, 0) + 1
+    # Also include vulnerabilities from high-impact scenarios
+    critical_vulnerabilities = []
+    for result in scenario_results:
+        if result.impact_percentage > 60 or result.survival_probability < 0.6:
+            critical_vulnerabilities.extend(result.key_vulnerabilities)
+    # Get most common vulnerabilities
+    common_vulnerabilities = [
+        vuln for vuln, count in vulnerability_counts.items() 
+        if count >= 2
+    ]
+    # Combine and deduplicate
+    all_critical = list(set(critical_vulnerabilities + common_vulnerabilities))
+    return all_critical[:5]  # Return top 5
+def _generate_recommended_mitigations(
+    scenario_results: List[ScenarioResult],
+    critical_vulnerabilities: List[str]
+) -> List[str]:
+    """Generate prioritized mitigation recommendations."""
+    mitigation_counts = {}
+    # Count mitigation strategy mentions
+    for result in scenario_results:
+        for mitigation in result.mitigation_strategies:
+            weight = result.parameters.probability * (result.impact_percentage / 100)
+            mitigation_counts[mitigation] = mitigation_counts.get(mitigation, 0) + weight
+    # Sort by weighted importance
+    sorted_mitigations = sorted(
+        mitigation_counts.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+    return [mitigation for mitigation, _ in sorted_mitigations[:8]]
+def _calculate_test_confidence(
+    niche: Niche,
+    trend_analysis: Optional[TrendAnalysis],
+    scenarios_tested: int
+) -> float:
+    """Calculate confidence level in the stress test results."""
+    base_confidence = 0.7
+    # Factor in niche data quality
+    base_confidence += (niche.confidence_score / 100) * 0.2
+    # Factor in trend data availability
+    if trend_analysis:
+        base_confidence += trend_analysis.confidence_level * 0.15
+    # Factor in number of scenarios tested
+    scenario_factor = min(1.0, scenarios_tested / 8) * 0.15
+    base_confidence += scenario_factor
+    return round(min(1.0, base_confidence), 2)
+def _get_highest_risk_scenarios(scenario_results: List[ScenarioResult]) -> List[Dict[str, Any]]:
+    """Get scenarios with highest risk (impact * probability)."""
+    risk_scenarios = []
+    for result in scenario_results:
+        risk_score = (result.impact_percentage / 100) * result.parameters.probability
+        risk_scenarios.append({
+            "scenario": result.scenario.value,
+            "risk_score": round(risk_score, 3),
+            "impact_percentage": result.impact_percentage,
+            "probability": result.parameters.probability
+        })
+    return sorted(risk_scenarios, key=lambda x: x["risk_score"], reverse=True)[:3]
+def _get_lowest_resilience_scenarios(scenario_results: List[ScenarioResult]) -> List[Dict[str, Any]]:
+    """Get scenarios with lowest resilience scores."""
+    resilience_scenarios = [
+        {
+            "scenario": result.scenario.value,
+            "resilience_score": result.resilience_score,
+            "survival_probability": result.survival_probability
+        }
+        for result in scenario_results
+    ]
+    return sorted(resilience_scenarios, key=lambda x: x["resilience_score"])[:3]
+def _analyze_survival_probabilities(scenario_results: List[ScenarioResult]) -> Dict[str, Any]:
+    """Analyze survival probabilities across scenarios."""
+    survival_probs = [r.survival_probability for r in scenario_results]
+    return {
+        "average_survival_probability": round(mean(survival_probs), 3),
+        "worst_case_survival": round(min(survival_probs), 3),
+        "best_case_survival": round(max(survival_probs), 3),
+        "scenarios_below_70_percent": len([p for p in survival_probs if p < 0.7]),
+        "scenarios_below_50_percent": len([p for p in survival_probs if p < 0.5])
+    }
+def _get_monitoring_priorities(scenario_results: List[ScenarioResult]) -> List[str]:
+    """Get monitoring priorities based on stress test results."""
+    priorities = []
+    # High-probability, high-impact scenarios need monitoring
+    for result in scenario_results:
+        if result.parameters.probability > 0.3 and result.impact_percentage > 40:
+            priorities.append(f"Monitor indicators for {result.scenario.value}")
+    # General monitoring recommendations
+    priorities.extend([
+        "Track competitor entry rates",
+        "Monitor trend strength and direction",
+        "Watch for seasonal pattern changes",
+        "Track platform policy updates"
+    ])
+    return priorities[:5]
+def _get_contingency_recommendations(scenario_results: List[ScenarioResult]) -> List[str]:
+    """Get contingency planning recommendations."""
+    recommendations = [
+        "Develop pivot strategies for related niches",
+        "Maintain diversified content portfolio",
+        "Build emergency fund for market downturns",
+        "Create rapid response protocols for competitive threats",
+        "Establish alternative revenue streams"
+    ]
+    # Add scenario-specific contingencies
+    high_risk_scenarios = [r for r in scenario_results if r.impact_percentage > 60]
+    if any(r.scenario == StressScenario.TREND_REVERSAL for r in high_risk_scenarios):
+        recommendations.append("Prepare trend reversal detection and response plan")
+    if any(r.scenario == StressScenario.COMPETITIVE_FLOODING for r in high_risk_scenarios):
+        recommendations.append("Develop competitive differentiation strategies")
+    return recommendations[:6]
+def _assess_niche_data_completeness(niche: Niche) -> float:
+    """Assess completeness of niche data for testing."""
+    completeness_score = 0.0
+    total_factors = 8
+    if niche.primary_keyword:
+        completeness_score += 1
+    if niche.related_keywords:
+        completeness_score += 1
+    if niche.competition_score > 0:
+        completeness_score += 1
+    if niche.profitability_score > 0:
+        completeness_score += 1
+    if niche.market_size_score > 0:
+        completeness_score += 1
+    if niche.trend_analysis:
+        completeness_score += 1
+    if niche.competitor_data:
+        completeness_score += 1
+    if niche.price_range:
+        completeness_score += 1
+    return round(completeness_score / total_factors, 2)
+</file>
+
+<file path="src/kdp_strategist/models/niche_model.py">
+"""Niche data model for KDP Strategist.
+Defines the Niche class and related data structures for representing
+market niches with scoring, competition analysis, and profitability metrics.
+"""
+from dataclasses import dataclass, field
+from typing import List, Tuple, Dict, Optional, Any
+from enum import Enum
+from datetime import datetime
+import json
+class NicheCategory(Enum):
+    """Enumeration of major KDP categories."""
+    BUSINESS = "Business & Money"
+    SELF_HELP = "Self-Help"
+    HEALTH_FITNESS = "Health, Fitness & Dieting"
+    COOKING = "Cookbooks, Food & Wine"
+    CRAFTS_HOBBIES = "Crafts, Hobbies & Home"
+    PARENTING = "Parenting & Relationships"
+    EDUCATION = "Education & Teaching"
+    TECHNOLOGY = "Computers & Technology"
+    TRAVEL = "Travel"
+    FICTION = "Literature & Fiction"
+    ROMANCE = "Romance"
+    MYSTERY = "Mystery, Thriller & Suspense"
+    FANTASY = "Science Fiction & Fantasy"
+    CHILDREN = "Children's Books"
+    YOUNG_ADULT = "Teen & Young Adult"
+    RELIGION = "Religion & Spirituality"
+    HISTORY = "History"
+    BIOGRAPHY = "Biographies & Memoirs"
+    POLITICS = "Politics & Social Sciences"
+    ARTS = "Arts & Photography"
+@dataclass
+class Niche:
+    """Represents a market niche with comprehensive analysis data.
+    This class encapsulates all information about a potential publishing niche,
+    including market metrics, competition analysis, and profitability scoring.
+    Attributes:
+        category: Primary category for the niche
+        subcategory: More specific subcategory
+        keywords: List of relevant keywords for the niche
+        competition_score: Competition intensity (0-100, lower is better)
+        profitability_score: Profit potential (0-100, higher is better)
+        trend_direction: Overall trend direction
+        estimated_monthly_searches: Estimated search volume per month
+        top_competitors: List of top competitor ASINs
+        recommended_price_range: Suggested pricing range (min, max)
+        content_gaps: Identified gaps in existing content
+        analysis_date: When this analysis was performed
+        confidence_score: Confidence in the analysis (0-100)
+        market_size_score: Overall market size assessment (0-100)
+        seasonal_factors: Seasonal considerations for the niche
+    """
+    # Core identification
+    category: str
+    subcategory: str
+    keywords: List[str]
+    # Scoring metrics (0-100 scale)
+    competition_score: float
+    profitability_score: float
+    confidence_score: float = 0.0
+    market_size_score: float = 0.0
+    # Trend analysis
+    trend_direction: str = "stable"  # 'rising', 'stable', 'declining'
+    estimated_monthly_searches: int = 0
+    # Competition data
+    top_competitors: List[str] = field(default_factory=list)  # ASINs
+    recommended_price_range: Tuple[float, float] = (9.99, 19.99)
+    # Content analysis
+    content_gaps: List[str] = field(default_factory=list)
+    seasonal_factors: Dict[str, float] = field(default_factory=dict)
+    # Metadata
+    analysis_date: datetime = field(default_factory=datetime.now)
+    additional_data: Dict[str, Any] = field(default_factory=dict)
+    def __post_init__(self):
+        """Validate data after initialization."""
+        self._validate_scores()
+        self._validate_keywords()
+        self._validate_price_range()
+        self._validate_trend_direction()
+    def _validate_scores(self) -> None:
+        """Validate that all scores are within valid ranges."""
+        scores = {
+            "competition_score": self.competition_score,
+            "profitability_score": self.profitability_score,
+            "confidence_score": self.confidence_score,
+            "market_size_score": self.market_size_score,
+        }
+        for score_name, score_value in scores.items():
+            if not 0 <= score_value <= 100:
+                raise ValueError(f"{score_name} must be between 0 and 100, got {score_value}")
+    def _validate_keywords(self) -> None:
+        """Validate keywords list."""
+        if not self.keywords:
+            raise ValueError("Keywords list cannot be empty")
+        if len(self.keywords) > 50:
+            raise ValueError("Too many keywords (max 50)")
+        for keyword in self.keywords:
+            if not isinstance(keyword, str) or not keyword.strip():
+                raise ValueError("All keywords must be non-empty strings")
+    def _validate_price_range(self) -> None:
+        """Validate price range."""
+        min_price, max_price = self.recommended_price_range
+        if min_price <= 0 or max_price <= 0:
+            raise ValueError("Prices must be positive")
+        if min_price >= max_price:
+            raise ValueError("Minimum price must be less than maximum price")
+    def _validate_trend_direction(self) -> None:
+        """Validate trend direction."""
+        valid_directions = {"rising", "stable", "declining"}
+        if self.trend_direction not in valid_directions:
+            raise ValueError(f"Trend direction must be one of {valid_directions}")
+    @property
+    def overall_score(self) -> float:
+        """Calculate overall niche score based on weighted metrics.
+        Returns:
+            Weighted score combining profitability, competition, and market size
+        """
+        # Weights for different factors
+        profitability_weight = 0.4
+        competition_weight = 0.3  # Lower competition is better, so invert
+        market_size_weight = 0.2
+        confidence_weight = 0.1
+        # Invert competition score (lower competition = higher score)
+        adjusted_competition = 100 - self.competition_score
+        weighted_score = (
+            self.profitability_score * profitability_weight +
+            adjusted_competition * competition_weight +
+            self.market_size_score * market_size_weight +
+            self.confidence_score * confidence_weight
+        )
+        return round(weighted_score, 2)
+    @property
+    def is_profitable(self) -> bool:
+        """Check if niche meets profitability criteria.
+        Returns:
+            True if niche is considered profitable
+        """
+        return (
+            self.profitability_score >= 50 and
+            self.competition_score <= 70 and
+            self.confidence_score >= 60
+        )
+    @property
+    def risk_level(self) -> str:
+        """Assess risk level for this niche.
+        Returns:
+            Risk level: 'low', 'medium', or 'high'
+        """
+        if self.competition_score <= 30 and self.confidence_score >= 80:
+            return "low"
+        elif self.competition_score <= 60 and self.confidence_score >= 60:
+            return "medium"
+        else:
+            return "high"
+    def get_primary_keywords(self, limit: int = 5) -> List[str]:
+        """Get the most important keywords for this niche.
+        Args:
+            limit: Maximum number of keywords to return
+        Returns:
+            List of primary keywords
+        """
+        return self.keywords[:limit]
+    def add_competitor(self, asin: str) -> None:
+        """Add a competitor ASIN to the analysis.
+        Args:
+            asin: Amazon Standard Identification Number
+        """
+        if asin and asin not in self.top_competitors:
+            self.top_competitors.append(asin)
+    def add_content_gap(self, gap: str) -> None:
+        """Add an identified content gap.
+        Args:
+            gap: Description of the content gap
+        """
+        if gap and gap not in self.content_gaps:
+            self.content_gaps.append(gap)
+    def set_seasonal_factor(self, month: str, factor: float) -> None:
+        """Set seasonal factor for a specific month.
+        Args:
+            month: Month name (e.g., 'January', 'February')
+            factor: Seasonal multiplier (1.0 = normal, >1.0 = higher demand)
+        """
+        if not 0 <= factor <= 5.0:
+            raise ValueError("Seasonal factor must be between 0 and 5.0")
+        self.seasonal_factors[month] = factor
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert niche to dictionary for serialization.
+        Returns:
+            Dictionary representation of the niche
+        """
+        return {
+            "category": self.category,
+            "subcategory": self.subcategory,
+            "keywords": self.keywords,
+            "competition_score": self.competition_score,
+            "profitability_score": self.profitability_score,
+            "confidence_score": self.confidence_score,
+            "market_size_score": self.market_size_score,
+            "trend_direction": self.trend_direction,
+            "estimated_monthly_searches": self.estimated_monthly_searches,
+            "top_competitors": self.top_competitors,
+            "recommended_price_range": list(self.recommended_price_range),
+            "content_gaps": self.content_gaps,
+            "seasonal_factors": self.seasonal_factors,
+            "analysis_date": self.analysis_date.isoformat(),
+            "additional_data": self.additional_data,
+            "overall_score": self.overall_score,
+            "is_profitable": self.is_profitable,
+            "risk_level": self.risk_level,
+        }
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Niche":
+        """Create niche from dictionary.
+        Args:
+            data: Dictionary containing niche data
+        Returns:
+            Niche instance
+        """
+        # Handle datetime conversion
+        if "analysis_date" in data and isinstance(data["analysis_date"], str):
+            data["analysis_date"] = datetime.fromisoformat(data["analysis_date"])
+        # Handle tuple conversion for price range
+        if "recommended_price_range" in data and isinstance(data["recommended_price_range"], list):
+            data["recommended_price_range"] = tuple(data["recommended_price_range"])
+        # Remove computed properties
+        computed_fields = {"overall_score", "is_profitable", "risk_level"}
+        filtered_data = {k: v for k, v in data.items() if k not in computed_fields}
+        return cls(**filtered_data)
+    def to_json(self) -> str:
+        """Convert niche to JSON string.
+        Returns:
+            JSON representation of the niche
+        """
+        return json.dumps(self.to_dict(), indent=2)
+    @classmethod
+    def from_json(cls, json_str: str) -> "Niche":
+        """Create niche from JSON string.
+        Args:
+            json_str: JSON string containing niche data
+        Returns:
+            Niche instance
+        """
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    def __str__(self) -> str:
+        """String representation of the niche."""
+        return f"Niche(category='{self.category}', subcategory='{self.subcategory}', score={self.overall_score})"
+    def __repr__(self) -> str:
+        """Detailed string representation of the niche."""
+        return (
+            f"Niche(category='{self.category}', subcategory='{self.subcategory}', "
+            f"keywords={len(self.keywords)}, profitability={self.profitability_score}, "
+            f"competition={self.competition_score}, overall_score={self.overall_score})"
+        )
+</file>
+
+</files>
