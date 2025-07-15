@@ -41,16 +41,27 @@ def get_agent():
 
 def convert_mcp_niche_to_api(mcp_niche: Dict[str, Any]) -> NicheData:
     """Convert MCP agent niche data to API response format."""
+    trend_data = mcp_niche.get("trend_analysis_data") or {}
+    if not isinstance(trend_data, dict):
+        trend_direction = getattr(trend_data, "trend_direction", "stable")
+    else:
+        trend_direction = trend_data.get("trend_direction", "stable")
+
+    market_size_score = float(mcp_niche.get("market_size_score", 0))
+    search_volume = int(market_size_score * 100)
+
     return NicheData(
-        name=mcp_niche.get('name', ''),
-        score=float(mcp_niche.get('profitability_score', 0)),
-        competition_level=mcp_niche.get('competition_level', 'unknown'),
-        search_volume=int(mcp_niche.get('search_volume', 0)),
-        trend_direction=mcp_niche.get('trend_direction', 'stable'),
-        keywords=mcp_niche.get('keywords', []),
-        estimated_revenue=mcp_niche.get('estimated_revenue'),
-        seasonality=mcp_niche.get('seasonality'),
-        barriers_to_entry=mcp_niche.get('barriers_to_entry', [])
+        name=mcp_niche.get("primary_keyword", mcp_niche.get("name", "")),
+        score=float(mcp_niche.get("profitability_score_numeric", mcp_niche.get("profitability_score", 0))),
+        competition_level=mcp_niche.get("competition_level", "unknown"),
+        profitability_tier=mcp_niche.get("profitability_tier", "medium"),
+        risk_level=mcp_niche.get("risk_level", "medium"),
+        search_volume=search_volume,
+        trend_direction=trend_direction,
+        keywords=mcp_niche.get("keywords", []),
+        estimated_revenue=mcp_niche.get("estimated_revenue"),
+        seasonality=mcp_niche.get("seasonal_factors"),
+        barriers_to_entry=mcp_niche.get("barriers_to_entry", [])
     )
 
 

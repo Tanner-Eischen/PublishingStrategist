@@ -70,16 +70,24 @@ class MarketAnalysis:
 
 class CompetitorAnalyzer:
     """Core analyzer for competitor data and market insights."""
-    
+
     # BSR to sales estimation (rough approximations)
+    BSR_LEVEL_1 = 1
+    BSR_LEVEL_10 = 10
+    BSR_LEVEL_100 = 100
+    BSR_LEVEL_1000 = 1000
+    BSR_LEVEL_10000 = 10000
+    BSR_LEVEL_100000 = 100000
+    BSR_LEVEL_1000000 = 1000000
+
     BSR_SALES_MAPPING = {
-        1: 3000,
-        10: 1500,
-        100: 300,
-        1000: 50,
-        10000: 10,
-        100000: 2,
-        1000000: 0.5
+        BSR_LEVEL_1: 3000,
+        BSR_LEVEL_10: 1500,
+        BSR_LEVEL_100: 300,
+        BSR_LEVEL_1000: 50,
+        BSR_LEVEL_10000: 10,
+        BSR_LEVEL_100000: 2,
+        BSR_LEVEL_1000000: 0.5,
     }
     
     @classmethod
@@ -94,7 +102,13 @@ class CompetitorAnalyzer:
                 return sales
         
         # For very high BSR (low sales)
-        return max(1, int(cls.BSR_SALES_MAPPING[1000000] * (1000000 / bsr)))
+        return max(
+            1,
+            int(
+                cls.BSR_SALES_MAPPING[cls.BSR_LEVEL_1000000]
+                * (cls.BSR_LEVEL_1000000 / bsr)
+            ),
+        )
     
     @classmethod
     def calculate_price_stability(cls, price_history: List[Tuple[datetime, float]]) -> float:
