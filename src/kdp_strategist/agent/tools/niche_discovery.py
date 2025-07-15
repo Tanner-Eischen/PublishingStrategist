@@ -429,17 +429,23 @@ async def _analyze_competition(keepa_client: Optional[KeepaClient], keywords: Li
                 review_counts = [p.review_count for p in products if p.review_count]
                 ratings = [p.rating for p in products if p.rating]
                 prices = [p.current_price for p in products if p.current_price]
-                
+
+                avg_review_count = sum(review_counts) / len(review_counts) if review_counts else 0
+                avg_rating = sum(ratings) / len(ratings) if ratings else 0
+                min_price = min(prices) if prices else 0
+                max_price = max(prices) if prices else 0
+                avg_price = sum(prices) / len(prices) if prices else 0
+
                 competition_data[keyword] = {
                     "competitor_count": len(products),
-                    "avg_review_count": sum(review_counts) / len(review_counts) if review_counts else 0,
-                    "avg_rating": sum(ratings) / len(ratings) if ratings else 0,
+                    "avg_review_count": avg_review_count,
+                    "avg_rating": avg_rating,
                     "price_range": {
-                        "min": min(prices) if prices else 0,
-                        "max": max(prices) if prices else 0,
-                        "avg": sum(prices) / len(prices) if prices else 0
+                        "min": min_price,
+                        "max": max_price,
+                        "avg": avg_price,
                     },
-                    "estimated": False
+                    "estimated": False,
                 }
             else:
                 # No competition found
