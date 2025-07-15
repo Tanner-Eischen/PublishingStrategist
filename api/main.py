@@ -16,19 +16,9 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 # Import existing MCP agent
-try:
-    # Prefer the real agent adapter if available
-    import sys
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-    from kdp_strategist.agent.kdp_strategist_adapter import (
-        KDPStrategistAdapter as KDPStrategistAgent,
-    )
-except ImportError:
-    # Fallback to mock implementation for development
-    from kdp_strategist.agent.mock_kdp_strategist_agent import (
-        MockKDPStrategistAgent as KDPStrategistAgent,
-    )
+from kdp_strategist.agent.kdp_strategist_adapter import (
+    KDPStrategistAdapter as KDPStrategistAgent,
+)
 
 # Import API routers
 from .routers import niches, competitors, listings, trends, stress
