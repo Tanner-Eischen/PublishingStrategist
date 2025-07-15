@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class NicheScorer:
     """Scoring engine for niche profitability analysis."""
-    
+
     # Scoring weights
     WEIGHTS = {
         "trend_score": 0.25,
@@ -42,6 +42,18 @@ class NicheScorer:
         "seasonality_score": 0.15,
         "content_gap_score": 0.10
     }
+
+    # Competition scoring thresholds
+    LOW_COMPETITION_THRESHOLD = 10
+    MEDIUM_COMPETITION_THRESHOLD = 50
+    HIGH_COMPETITION_THRESHOLD = 100
+
+    HIGH_REVIEW_THRESHOLD = 1000
+    MEDIUM_REVIEW_THRESHOLD = 100
+    LOW_REVIEW_THRESHOLD = 10
+
+    LOW_RATING_THRESHOLD = 3.5
+    HIGH_RATING_THRESHOLD = 4.5
     
     @classmethod
     def calculate_profitability_score(cls, niche_data: Dict[str, Any]) -> float:
@@ -101,27 +113,27 @@ class NicheScorer:
         # Base score inversely related to competition
         if competitor_count == 0:
             base_score = 100
-        elif competitor_count < 10:
+        elif competitor_count < cls.LOW_COMPETITION_THRESHOLD:
             base_score = 90
-        elif competitor_count < 50:
+        elif competitor_count < cls.MEDIUM_COMPETITION_THRESHOLD:
             base_score = 70
-        elif competitor_count < 100:
+        elif competitor_count < cls.HIGH_COMPETITION_THRESHOLD:
             base_score = 50
         else:
             base_score = 30
-        
+
         # Adjust for review saturation
-        if avg_reviews > 1000:
+        if avg_reviews > cls.HIGH_REVIEW_THRESHOLD:
             base_score *= 0.6  # High review saturation
-        elif avg_reviews > 100:
+        elif avg_reviews > cls.MEDIUM_REVIEW_THRESHOLD:
             base_score *= 0.8
-        elif avg_reviews < 10:
+        elif avg_reviews < cls.LOW_REVIEW_THRESHOLD:
             base_score *= 1.2  # Low review saturation = opportunity
-        
+
         # Adjust for rating quality
-        if avg_rating < 3.5:
+        if avg_rating < cls.LOW_RATING_THRESHOLD:
             base_score *= 1.3  # Poor ratings = opportunity
-        elif avg_rating > 4.5:
+        elif avg_rating > cls.HIGH_RATING_THRESHOLD:
             base_score *= 0.9  # High ratings = strong competition
         
         return min(100, base_score)
