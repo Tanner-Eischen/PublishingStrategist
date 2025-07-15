@@ -24,19 +24,14 @@ import re
 from ...data.cache_manager import CacheManager
 from ...data.keepa_client import KeepaClient
 from ...data.trends_client import TrendsClient
-from ...models.niche_model import Niche
-from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
-from src.kdp_strategist.models.niche_model import (
+from ...models.niche_model import (
     Niche,
     CompetitionLevel,
     ProfitabilityTier,
     RiskLevel,
-)  # Add RiskLevel
-from src.kdp_strategist.models.trend_model import (
-    TrendAnalysis,
-    TrendDirection,
-    TrendStrength,
 )
+from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
+
 
 logger = logging.getLogger(__name__)
 
@@ -564,12 +559,10 @@ async def _analyze_competition(
     return competition_data
 
 
-async def _generate_niche_candidates(
-    keywords: List[str],
-    trend_analyses: Dict[str, TrendAnalysis],
-    competition_data: Dict[str, Dict[str, Any]],
-    categories: Optional[List[str]],
-) -> List[Niche]:
+async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[str, TrendAnalysis],
+                                    competition_data: Dict[str, Dict[str, Any]],
+                                    categories: Optional[List[str]]) -> List[Niche]:
+
     """Generate niche candidates from analyzed data."""
     niche_candidates = []
 
@@ -591,24 +584,29 @@ async def _generate_niche_candidates(
             keywords=[keyword] + trend_analysis.related_queries[:10],
             trend_analysis_data=trend_analysis,
             competitor_analysis_data=competition,
-            market_size_score=market_size_score,
+
+            market_size_score=_estimate_market_size(trend_analysis, competition),
+
             seasonal_factors=trend_analysis.seasonal_patterns,
             # Calculate and assign numeric scores directly during construction
             profitability_score_numeric=NicheScorer.calculate_profitability_score(
                 {
                     "trend_analysis": trend_analysis,
                     "competition_data": competition,
-                    "market_metrics": metrics,
+
+                    "market_metrics": {
+                        "estimated_search_volume": _estimate_market_size(trend_analysis, competition) * 100
+                    },
+
                     "seasonal_patterns": trend_analysis.seasonal_patterns,
                     "content_analysis": {"identified_gaps": 5},
                 }
             ),
-            competition_score_numeric=NicheScorer._score_competition_level(competition)
-            or 0.0,
-        )
-        # `competition_level` and `profitability_tier` will be set in Niche's __post_init__
 
+            competition_score_numeric=NicheScorer._score_competition_level(competition) or 0.0,
+        )
         niche_candidates.append(niche)
+    
 
     return niche_candidates
 
@@ -752,31 +750,23 @@ def _generate_recommendations(
 
     # Identify quick wins (low competition, decent score)
     for niche in top_niches[:5]:
-        if (
-            niche.competition_level == CompetitionLevel.LOW
-            and niche.profitability_score_numeric >= 60
-        ):
-            recommendations["quick_wins"].append(
-                {
-                    "niche": niche.primary_keyword,
-                    "score": niche.profitability_score,
-                    "competitors": niche.competitor_data.get("count", 0),
-                }
-            )
 
+        if niche.competition_level == CompetitionLevel.LOW and niche.profitability_score_numeric >= 60:
+            recommendations["quick_wins"].append({
+                "niche": niche.primary_keyword,
+                "score": niche.profitability_score_numeric,
+                "competitors": niche.competitor_analysis_data.get("count", 0)
+            })
+    
     # Identify long-term opportunities (high potential, manageable competition)
     for niche in top_niches[:10]:
-        if (
-            niche.profitability_score_numeric >= 75
-            and niche.trend_analysis_data  # Use the renamed field
-            and niche.trend_analysis_data.direction == TrendDirection.RISING
-        ):
-            recommendations["long_term_opportunities"].append(
-                {
-                    "niche": niche.primary_keyword,
-                    "score": niche.profitability_score,
-                    "trend_direction": niche.trend_analysis.direction.value,
-                }
-            )
+        if (niche.profitability_score_numeric >= 75 and
+            niche.trend_analysis_data and # Use the renamed field
+            niche.trend_analysis_data.direction == TrendDirection.RISING):
+            recommendations["long_term_opportunities"].append({
+                "niche": niche.primary_keyword,
+                "score": niche.profitability_score_numeric,
+                "trend_direction": niche.trend_analysis_data.direction.value
+            })
 
     return recommendations

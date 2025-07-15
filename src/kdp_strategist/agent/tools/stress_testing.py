@@ -256,8 +256,8 @@ class StressTester:
         
         elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
             # Higher price points more vulnerable to economic stress
-            if niche.price_range:
-                avg_price = (niche.price_range[0] + niche.price_range[1]) / 2
+            if niche.recommended_price_range:
+                avg_price = (niche.recommended_price_range[0] + niche.recommended_price_range[1]) / 2
                 price_factor = min(1.0, avg_price / 50)  # Normalize around $50
                 base_impact *= (1 + price_factor * 0.5)
         
@@ -301,11 +301,11 @@ class StressTester:
         base_recovery = 0.7  # Base 70% recovery
         
         # Higher profitability = better recovery
-        profitability_factor = niche.profitability_score / 100
+        profitability_factor = niche.profitability_score_numeric / 100
         base_recovery += profitability_factor * 0.2
         
         # Lower competition = easier recovery
-        competition_factor = (100 - niche.competition_score_numreic) / 100
+        competition_factor = (100 - niche.competition_score_numeric) / 100
         base_recovery += competition_factor * 0.15
         
         # Market size helps recovery
@@ -376,7 +376,7 @@ class StressTester:
                 vulnerabilities.append("Small market size limits growth potential")
         
         elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
-            if niche.price_range and niche.price_range[1] > 30:
+            if niche.recommended_price_range and niche.recommended_price_range[1] > 30:
                 vulnerabilities.append("Higher price point vulnerable to economic stress")
             if "luxury" in niche.category.lower() or "premium" in niche.category.lower():
                 vulnerabilities.append("Luxury/premium positioning vulnerable in downturns")
@@ -395,7 +395,7 @@ class StressTester:
         if niche.confidence_score < 60:
             vulnerabilities.append("Low confidence in niche data increases uncertainty")
         
-        if niche.profitability_score < 50:
+        if niche.profitability_score_numeric < 50:
             vulnerabilities.append("Low profitability reduces stress resilience")
         
         return vulnerabilities
@@ -454,13 +454,13 @@ class StressTester:
             ])
         
         # General mitigation strategies
-        if niche.profitability_score < 60:
+        if niche.profitability_score_numeric < 60:
             strategies.append("Focus on improving profit margins through premium positioning")
         
         if niche.market_size_score < 50:
             strategies.append("Expand target market through related keywords and topics")
         
-        if niche.competition_score > 70:
+        if niche.competition_score_numeric > 70:
             strategies.append("Identify and exploit competitor weaknesses")
         
         return strategies[:5]  # Limit to top 5 strategies
@@ -883,19 +883,19 @@ def _assess_niche_data_completeness(niche: Niche) -> float:
     
     if niche.primary_keyword:
         completeness_score += 1
-    if niche.related_keywords:
+    if niche.keywords:
         completeness_score += 1
-    if niche.competition_score > 0:
+    if niche.competition_score_numeric > 0:
         completeness_score += 1
-    if niche.profitability_score > 0:
+    if niche.profitability_score_numeric > 0:
         completeness_score += 1
     if niche.market_size_score > 0:
         completeness_score += 1
-    if niche.trend_analysis:
+    if niche.trend_analysis_data:
         completeness_score += 1
-    if niche.competitor_data:
+    if niche.competitor_analysis_data:
         completeness_score += 1
-    if niche.price_range:
+    if niche.recommended_price_range:
         completeness_score += 1
     
     return round(completeness_score / total_factors, 2)
