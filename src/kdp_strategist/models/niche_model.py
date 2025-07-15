@@ -67,8 +67,6 @@ class Niche:
         keywords: List of relevant keywords for the niche
         competition_score: Competition intensity (0-100, lower is better)
         profitability_score: Profit potential (0-100, higher is better)
-        trend_direction: Overall trend direction
-        estimated_monthly_searches: Estimated search volume per month
         top_competitors: List of top competitor ASINs
         recommended_price_range: Suggested pricing range (min, max)
         content_gaps: Identified gaps in existing content
