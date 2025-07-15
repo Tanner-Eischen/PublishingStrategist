@@ -17,12 +17,12 @@ import uvicorn
 
 # Import existing MCP agent
 try:
-    # from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
+    from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
 except ImportError:
-    # Fallback for development
+    # Fallback for development when package is not installed
     import sys
     import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
     from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
 
 # Import API routers
