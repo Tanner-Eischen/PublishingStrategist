@@ -31,6 +31,17 @@ class ContentType(Enum):
     DRAMA = "Drama"
 
 
+class TargetAudience(Enum):
+    """Common audience segments for KDP listings."""
+    CHILDREN = "children"
+    TEENS = "teens"
+    ADULTS = "adults"
+    SENIORS = "seniors"
+    PROFESSIONALS = "professionals"
+    STUDENTS = "students"
+    GENERAL = "general"
+
+
 @dataclass
 class KDPListing:
     """Represents an optimized book listing for Amazon KDP.
@@ -67,7 +78,7 @@ class KDPListing:
     categories: List[str] = field(default_factory=list)  # Primary + secondary
     
     # Target market
-    target_audience: str = ""
+    target_audience: TargetAudience = TargetAudience.GENERAL
     unique_selling_points: List[str] = field(default_factory=list)
     
     # Content planning
@@ -346,7 +357,7 @@ class KDPListing:
             "description": self.description,
             "keywords": self.keywords,
             "categories": self.categories,
-            "target_audience": self.target_audience,
+            "target_audience": self.target_audience.value,
             "unique_selling_points": self.unique_selling_points,
             "estimated_page_count": self.estimated_page_count,
             "suggested_price": self.suggested_price,
@@ -387,6 +398,12 @@ class KDPListing:
             "is_optimized", "character_counts", "seo_strength", "full_title"
         }
         filtered_data = {k: v for k, v in data.items() if k not in computed_fields}
+
+        if "target_audience" in filtered_data and isinstance(filtered_data["target_audience"], str):
+            try:
+                filtered_data["target_audience"] = TargetAudience(filtered_data["target_audience"])
+            except ValueError:
+                filtered_data["target_audience"] = TargetAudience.GENERAL
         
         return cls(**filtered_data)
     
