@@ -9,7 +9,7 @@ All models include validation, serialization, and utility methods.
 """
 
 from .niche_model import Niche, NicheCategory
-from .listing_model import KDPListing, ListingCategory
+from .listing_model import KDPListing, ListingCategory, ContentType, TargetAudience
 from .trend_model import TrendAnalysis, TrendDirection, SeasonalPattern
 
 __all__ = [
@@ -17,6 +17,8 @@ __all__ = [
     "NicheCategory",
     "KDPListing",
     "ListingCategory",
+    "ContentType",
+    "TargetAudience",
     "TrendAnalysis",
     "TrendDirection",
     "SeasonalPattern",
