@@ -100,72 +100,89 @@ class StressTestReport:
 class StressTester:
     """Core stress testing engine."""
     
+    # Default parameters for each stress scenario
+    MARKET_SATURATION_DEFAULT = StressTestParameters(
+        scenario=StressScenario.MARKET_SATURATION,
+        severity=0.7,
+        duration_months=6,
+        recovery_months=12,
+        probability=0.3,
+        description="Market becomes oversaturated with competitors",
+    )
+
+    ECONOMIC_DOWNTURN_DEFAULT = StressTestParameters(
+        scenario=StressScenario.ECONOMIC_DOWNTURN,
+        severity=0.6,
+        duration_months=8,
+        recovery_months=18,
+        probability=0.2,
+        description="Economic recession reduces consumer spending",
+    )
+
+    COMPETITIVE_FLOODING_DEFAULT = StressTestParameters(
+        scenario=StressScenario.COMPETITIVE_FLOODING,
+        severity=0.8,
+        duration_months=4,
+        recovery_months=8,
+        probability=0.4,
+        description="Sudden influx of new competitors",
+    )
+
+    SEASONAL_CRASH_DEFAULT = StressTestParameters(
+        scenario=StressScenario.SEASONAL_CRASH,
+        severity=0.9,
+        duration_months=3,
+        recovery_months=6,
+        probability=0.5,
+        description="Severe seasonal demand drop",
+    )
+
+    PLATFORM_CHANGES_DEFAULT = StressTestParameters(
+        scenario=StressScenario.PLATFORM_CHANGES,
+        severity=0.5,
+        duration_months=3,
+        recovery_months=9,
+        probability=0.3,
+        description="Amazon algorithm or policy changes",
+    )
+
+    TREND_REVERSAL_DEFAULT = StressTestParameters(
+        scenario=StressScenario.TREND_REVERSAL,
+        severity=0.8,
+        duration_months=12,
+        recovery_months=24,
+        probability=0.25,
+        description="Major trend reversal or consumer preference shift",
+    )
+
+    CONSUMER_SHIFT_DEFAULT = StressTestParameters(
+        scenario=StressScenario.CONSUMER_SHIFT,
+        severity=0.6,
+        duration_months=9,
+        recovery_months=15,
+        probability=0.35,
+        description="Consumer behavior and preferences change",
+    )
+
+    SUPPLY_CHAIN_DISRUPTION_DEFAULT = StressTestParameters(
+        scenario=StressScenario.SUPPLY_CHAIN_DISRUPTION,
+        severity=0.4,
+        duration_months=2,
+        recovery_months=4,
+        probability=0.15,
+        description="Supply chain or production disruptions",
+    )
+
     # Stress test scenarios with default parameters
     DEFAULT_SCENARIOS = {
-        StressScenario.MARKET_SATURATION: StressTestParameters(
-            scenario=StressScenario.MARKET_SATURATION,
-            severity=0.7,
-            duration_months=6,
-            recovery_months=12,
-            probability=0.3,
-            description="Market becomes oversaturated with competitors"
-        ),
-        StressScenario.ECONOMIC_DOWNTURN: StressTestParameters(
-            scenario=StressScenario.ECONOMIC_DOWNTURN,
-            severity=0.6,
-            duration_months=8,
-            recovery_months=18,
-            probability=0.2,
-            description="Economic recession reduces consumer spending"
-        ),
-        StressScenario.COMPETITIVE_FLOODING: StressTestParameters(
-            scenario=StressScenario.COMPETITIVE_FLOODING,
-            severity=0.8,
-            duration_months=4,
-            recovery_months=8,
-            probability=0.4,
-            description="Sudden influx of new competitors"
-        ),
-        StressScenario.SEASONAL_CRASH: StressTestParameters(
-            scenario=StressScenario.SEASONAL_CRASH,
-            severity=0.9,
-            duration_months=3,
-            recovery_months=6,
-            probability=0.5,
-            description="Severe seasonal demand drop"
-        ),
-        StressScenario.PLATFORM_CHANGES: StressTestParameters(
-            scenario=StressScenario.PLATFORM_CHANGES,
-            severity=0.5,
-            duration_months=3,
-            recovery_months=9,
-            probability=0.3,
-            description="Amazon algorithm or policy changes"
-        ),
-        StressScenario.TREND_REVERSAL: StressTestParameters(
-            scenario=StressScenario.TREND_REVERSAL,
-            severity=0.8,
-            duration_months=12,
-            recovery_months=24,
-            probability=0.25,
-            description="Major trend reversal or consumer preference shift"
-        ),
-        StressScenario.CONSUMER_SHIFT: StressTestParameters(
-            scenario=StressScenario.CONSUMER_SHIFT,
-            severity=0.6,
-            duration_months=9,
-            recovery_months=15,
-            probability=0.35,
-            description="Consumer behavior and preferences change"
-        ),
-        StressScenario.SUPPLY_CHAIN_DISRUPTION: StressTestParameters(
-            scenario=StressScenario.SUPPLY_CHAIN_DISRUPTION,
-            severity=0.4,
-            duration_months=2,
-            recovery_months=4,
-            probability=0.15,
-            description="Supply chain or production disruptions"
-        )
+        StressScenario.MARKET_SATURATION: MARKET_SATURATION_DEFAULT,
+        StressScenario.ECONOMIC_DOWNTURN: ECONOMIC_DOWNTURN_DEFAULT,
+        StressScenario.COMPETITIVE_FLOODING: COMPETITIVE_FLOODING_DEFAULT,
+        StressScenario.SEASONAL_CRASH: SEASONAL_CRASH_DEFAULT,
+        StressScenario.PLATFORM_CHANGES: PLATFORM_CHANGES_DEFAULT,
+        StressScenario.TREND_REVERSAL: TREND_REVERSAL_DEFAULT,
+        StressScenario.CONSUMER_SHIFT: CONSUMER_SHIFT_DEFAULT,
+        StressScenario.SUPPLY_CHAIN_DISRUPTION: SUPPLY_CHAIN_DISRUPTION_DEFAULT,
     }
     
     @classmethod
@@ -246,8 +263,8 @@ class StressTester:
         
         elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
             # Higher price points more vulnerable to economic stress
-            if niche.price_range:
-                avg_price = (niche.price_range[0] + niche.price_range[1]) / 2
+            if niche.recommended_price_range:
+                avg_price = (niche.recommended_price_range[0] + niche.recommended_price_range[1]) / 2
                 price_factor = min(1.0, avg_price / 50)  # Normalize around $50
                 base_impact *= (1 + price_factor * 0.5)
         
@@ -291,11 +308,11 @@ class StressTester:
         base_recovery = 0.7  # Base 70% recovery
         
         # Higher profitability = better recovery
-        profitability_factor = niche.profitability_score / 100
+        profitability_factor = niche.profitability_score_numeric / 100
         base_recovery += profitability_factor * 0.2
         
         # Lower competition = easier recovery
-        competition_factor = (100 - niche.competition_score_numreic) / 100
+        competition_factor = (100 - niche.competition_score_numeric) / 100
         base_recovery += competition_factor * 0.15
         
         # Market size helps recovery
@@ -366,7 +383,7 @@ class StressTester:
                 vulnerabilities.append("Small market size limits growth potential")
         
         elif scenario_params.scenario == StressScenario.ECONOMIC_DOWNTURN:
-            if niche.price_range and niche.price_range[1] > 30:
+            if niche.recommended_price_range and niche.recommended_price_range[1] > 30:
                 vulnerabilities.append("Higher price point vulnerable to economic stress")
             if "luxury" in niche.category.lower() or "premium" in niche.category.lower():
                 vulnerabilities.append("Luxury/premium positioning vulnerable in downturns")
@@ -385,7 +402,7 @@ class StressTester:
         if niche.confidence_score < 60:
             vulnerabilities.append("Low confidence in niche data increases uncertainty")
         
-        if niche.profitability_score < 50:
+        if niche.profitability_score_numeric < 50:
             vulnerabilities.append("Low profitability reduces stress resilience")
         
         return vulnerabilities
@@ -444,13 +461,13 @@ class StressTester:
             ])
         
         # General mitigation strategies
-        if niche.profitability_score < 60:
+        if niche.profitability_score_numeric < 60:
             strategies.append("Focus on improving profit margins through premium positioning")
         
         if niche.market_size_score < 50:
             strategies.append("Expand target market through related keywords and topics")
         
-        if niche.competition_score > 70:
+        if niche.competition_score_numeric > 70:
             strategies.append("Identify and exploit competitor weaknesses")
         
         return strategies[:5]  # Limit to top 5 strategies
@@ -882,19 +899,19 @@ def _assess_niche_data_completeness(niche: Niche) -> float:
     
     if niche.primary_keyword:
         completeness_score += 1
-    if niche.related_keywords:
+    if niche.keywords:
         completeness_score += 1
-    if niche.competition_score > 0:
+    if niche.competition_score_numeric > 0:
         completeness_score += 1
-    if niche.profitability_score > 0:
+    if niche.profitability_score_numeric > 0:
         completeness_score += 1
     if niche.market_size_score > 0:
         completeness_score += 1
-    if niche.trend_analysis:
+    if niche.trend_analysis_data:
         completeness_score += 1
-    if niche.competitor_data:
+    if niche.competitor_analysis_data:
         completeness_score += 1
-    if niche.price_range:
+    if niche.recommended_price_range:
         completeness_score += 1
     
     return round(completeness_score / total_factors, 2)

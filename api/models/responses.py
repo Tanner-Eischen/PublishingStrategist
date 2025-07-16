@@ -37,9 +37,13 @@ class NicheData(BaseModel):
         # Map to profitability_score_numeric
         score: float = Field(..., description="Profitability score (0-100)")
         # Use the Enum for competition_level
-        competition_level: CompetitionLevel = Field(..., description="Competition level: low, medium, high")
+        competition_level: CompetitionLevel = Field(
+            ..., description="Categorical competition level"
+        )
         # Add profitability_tier field using the Enum
-        profitability_tier: ProfitabilityTier = Field(..., description="Profitability tier: low, medium, high")
+        profitability_tier: ProfitabilityTier = Field(
+            ..., description="Categorical profitability tier"
+        )
         risk_level: RiskLevel = Field(..., description="Overall risk level for the niche") # Add risk_level
         search_volume: int = Field(..., description="Monthly search volume") # This will be derived
         trend_direction: str = Field(..., description="Trend direction: rising, stable, declining") # This will be derived
@@ -157,7 +161,7 @@ class StressTestingResponse(BaseModel):
     status: str = Field(default="success", description="Response status")
     niche: str = Field(..., description="Tested niche")
     overall_resilience: float = Field(..., description="Overall resilience score (0-100)")
-    risk_level: str = Field(..., description="Risk level: low, medium, high")
+    risk_level: RiskLevel = Field(..., description="Risk level: low, medium, high")
     scenarios: List[StressTestScenario] = Field(..., description="Stress test scenarios")
     analysis_metadata: AnalysisMetadata = Field(..., description="Analysis metadata")
     charts: List[ChartData] = Field(default=[], description="Visualization data")
