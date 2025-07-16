@@ -4,7 +4,7 @@ Defines the Niche class and related data structures for representing
 market niches with scoring, competition analysis, and profitability metrics.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import List, Tuple, Dict, Optional, Any
 from enum import Enum
 from datetime import datetime
@@ -55,6 +55,24 @@ class NicheCategory(Enum):
 
 
 @dataclass
+class PriceRange:
+    """Simple price range representation."""
+    min: float = 0.0
+    max: float = 0.0
+    avg: float = 0.0
+
+
+@dataclass
+class MarketSummary:
+    """Summary of competitor landscape for a niche."""
+    competitor_count: int = 0
+    avg_review_count: float = 0.0
+    avg_rating: float = 0.0
+    price_range: PriceRange = field(default_factory=PriceRange)
+    estimated: bool = False
+
+
+@dataclass
 class Niche:
     """Represents a market niche with comprehensive analysis data.
     
@@ -94,8 +112,8 @@ class Niche:
     profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
 
         # Detailed Analysis Data (store objects or dicts for flexibility)
-    trend_analysis_data: Optional[TrendAnalysis] = None # Renamed, store TrendAnalysis object
-    competitor_analysis_data: Dict[str, Any] = field(default_factory=dict) # Added, matches usage
+    trend_analysis_data: Optional[TrendAnalysis] = None  # Renamed, store TrendAnalysis object
+    competitor_analysis_data: MarketSummary = field(default_factory=MarketSummary)
     seasonal_factors: Dict[str, float] = field(default_factory=dict)
     content_gaps: List[str] = field(default_factory=list)
 
@@ -217,7 +235,7 @@ class Niche:
                 "competition_level": self.competition_level.value, # Serialize enum value
                 "profitability_tier": self.profitability_tier.value, # Serialize enum value
                 "trend_analysis_data": self.trend_analysis_data.to_dict() if self.trend_analysis_data else None, # Serialize nested dataclass
-                "competitor_analysis_data": self.competitor_analysis_data,
+                "competitor_analysis_data": asdict(self.competitor_analysis_data),
                 "seasonal_factors": self.seasonal_factors,
                 "content_gaps": self.content_gaps,
                 "recommended_price_range": list(self.recommended_price_range),
@@ -261,6 +279,22 @@ class Niche:
                  if data["trend_analysis"] is not None:
                     data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis"])
                  data.pop("trend_analysis") # Remove old key
+
+            # Deserialize competitor analysis data
+            if "competitor_analysis_data" in data and isinstance(data["competitor_analysis_data"], dict):
+                cad = data["competitor_analysis_data"]
+                price_range = cad.get("price_range", {})
+                data["competitor_analysis_data"] = MarketSummary(
+                    competitor_count=cad.get("competitor_count", 0),
+                    avg_review_count=cad.get("avg_review_count", 0.0),
+                    avg_rating=cad.get("avg_rating", 0.0),
+                    price_range=PriceRange(
+                        min=price_range.get("min", 0.0),
+                        max=price_range.get("max", 0.0),
+                        avg=price_range.get("avg", 0.0),
+                    ),
+                    estimated=cad.get("estimated", False),
+                )
 
             # Rename old score keys if present
             if 'competition_score' in data and 'competition_score_numeric' not in data:
