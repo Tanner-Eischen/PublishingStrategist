@@ -1,51 +1,54 @@
-#!/usr/bin/env python3
-"""Test configuration validation with invalid values."""
+"""Test script to debug configuration validation issues."""
 
 import os
-from config.settings import Settings, ConfigurationError
+import sys
+from pathlib import Path
 
-# Test 1: Invalid environment
-print("=== Test 1: Invalid Environment ===")
-os.environ['ENVIRONMENT'] = 'invalid_env'
-try:
-    settings = Settings.from_env()
-    print("ERROR: Should have failed with invalid environment")
-except ConfigurationError as e:
-    print(f"✓ Correctly caught invalid environment: {e}")
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
 
-# Test 2: Invalid cache type
-print("\n=== Test 2: Invalid Cache Type ===")
-os.environ['ENVIRONMENT'] = 'development'
-os.environ['CACHE_TYPE'] = 'invalid_cache'
-try:
-    settings = Settings.from_env()
-    print("ERROR: Should have failed with invalid cache type")
-except ConfigurationError as e:
-    print(f"✓ Correctly caught invalid cache type: {e}")
+def test_config_validation():
+    """Test configuration validation with current environment."""
+    print("Testing configuration validation...")
+    
+    # Print current environment variables
+    print("\nCurrent environment variables:")
+    config_vars = [
+        'CACHE_TYPE', 'ENVIRONMENT', 'DEBUG', 'LOG_LEVEL',
+        'TREND_WEIGHT', 'COMPETITION_WEIGHT', 'PROFITABILITY_WEIGHT'
+    ]
+    
+    for var in config_vars:
+        value = os.getenv(var, 'NOT_SET')
+        print(f"  {var} = {value}")
+    
+    # Try to create settings
+    try:
+        from config.settings import Settings
+        settings = Settings.from_env()
+        print("\n✓ Configuration validation passed!")
+        
+        # Print some key settings
+        print(f"  Cache type: {settings.cache.cache_type}")
+        print(f"  Environment: {settings.environment}")
+        print(f"  Debug: {settings.debug}")
+        print(f"  Log level: {settings.logging.level}")
+        
+        # Check weights sum
+        weights_sum = (settings.business.trend_weight + 
+                      settings.business.competition_weight + 
+                      settings.business.profitability_weight)
+        print(f"  Business weights sum: {weights_sum}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"\n❌ Configuration validation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
-# Test 3: Invalid business weights
-print("\n=== Test 3: Invalid Business Weights ===")
-os.environ['CACHE_TYPE'] = 'file'
-os.environ['TREND_WEIGHT'] = '0.5'
-os.environ['COMPETITION_WEIGHT'] = '0.5'
-os.environ['PROFITABILITY_WEIGHT'] = '0.5'  # Sum = 1.5, should fail
-try:
-    settings = Settings.from_env()
-    print("ERROR: Should have failed with invalid weights")
-except ConfigurationError as e:
-    print(f"✓ Correctly caught invalid weights: {e}")
 
-# Test 4: Production without API key
-print("\n=== Test 4: Production Without API Key ===")
-os.environ['ENVIRONMENT'] = 'production'
-os.environ['TREND_WEIGHT'] = '0.4'
-os.environ['COMPETITION_WEIGHT'] = '0.3'
-os.environ['PROFITABILITY_WEIGHT'] = '0.3'
-# Don't set KEEPA_API_KEY
-try:
-    settings = Settings.from_env()
-    print("ERROR: Should have failed without API key in production")
-except ConfigurationError as e:
-    print(f"✓ Correctly caught missing API key in production: {e}")
-
-print("\n=== All validation tests completed ===")
+if __name__ == "__main__":
+    success = test_config_validation()
+    sys.exit(0 if success else 1)

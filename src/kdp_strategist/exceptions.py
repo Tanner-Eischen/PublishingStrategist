@@ -142,9 +142,10 @@ class RateLimitExceededError(APIClientError):
         if retry_after:
             message += f". Retry after {retry_after} seconds"
         
-        details = {"quota_type": quota_type}
+        # Create details for the parent class
+        additional_details = {"quota_type": quota_type}
         if retry_after:
-            details["retry_after"] = retry_after
+            additional_details["retry_after"] = retry_after
         
         super().__init__(
             message=message,
@@ -152,6 +153,9 @@ class RateLimitExceededError(APIClientError):
             error_code=ErrorCode.RATE_LIMIT_EXCEEDED,
             cause=cause
         )
+        
+        # Merge additional details with parent details
+        self.details.update(additional_details)
         self.retry_after = retry_after
 
 

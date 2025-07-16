@@ -222,59 +222,5 @@ function App() {
     </ErrorBoundary>
   );
 }
-            {/* Navigation */}
-            <div className="flex">
-            {/* Sidebar */}
-            <Sidebar 
-              isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
-            />
-            {/* Main Content Area */}
-            <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-              <Navbar
-                onToggleSidebar={toggleSidebar}
-                currentUser={currentUser}
-                isConnected={isConnected}
-                sidebarOpen={sidebarOpen}
-              />
-              <main className="pt-16">
-                <div className="py-6">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <Routes>
-                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/niche-discovery" element={<NicheDiscovery />} />
-                      <Route path="/competitor-analysis" element={<CompetitorAnalysis />} />
-                      <Route path="/listing-generation" element={<ListingGeneration />} />
-                      <Route path="/trend-validation" element={<TrendValidation />} />
-                      <Route path="/stress-testing" element={<StressTesting />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                    </Routes>
-                  </div>
-                </div>
-              </main>
-            </div>
-            </div>
-            
-            {/* Toast Notifications */}
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="light"
-            />
-          </div>
-        </Router>
-      </ApiContext.Provider>
-    </ErrorBoundary>
-  );
-}
 
 export default App;

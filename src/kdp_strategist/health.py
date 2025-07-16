@@ -198,7 +198,10 @@ class HealthChecker:
         start_time = time.time()
         
         try:
-            disk = psutil.disk_usage('/')
+            # Use current directory for Windows compatibility
+            import os
+            disk_path = os.getcwd() if os.name == 'nt' else '/'
+            disk = psutil.disk_usage(disk_path)
             disk_percent = (disk.used / disk.total) * 100
             free_gb = disk.free / (1024**3)
             
@@ -215,7 +218,8 @@ class HealthChecker:
             details = {
                 "disk_percent_used": disk_percent,
                 "disk_free_gb": free_gb,
-                "disk_total_gb": disk.total / (1024**3)
+                "disk_total_gb": disk.total / (1024**3),
+                "disk_path": disk_path
             }
             
         except Exception as e:

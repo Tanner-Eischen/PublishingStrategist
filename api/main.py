@@ -9,24 +9,27 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import uvicorn
 
 # Import existing MCP agent
-
 from src.kdp_strategist.agent.kdp_strategist_agent import KDPStrategistAgent
 
-
+# Import error handling infrastructure
+from src.kdp_strategist.error_handlers import register_error_handlers
+from src.kdp_strategist.logging_config import configure_logging, get_logger
+from src.kdp_strategist.health import get_health_checker
+from src.kdp_strategist.exceptions import KDPStrategistError, ConfigurationError
 
 # Import API routers
 from .routers import niches, competitors, listings, trends, stress
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure structured logging
+configure_logging()
+logger = get_logger(__name__)
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -103,6 +106,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register error handlers
+register_error_handlers(app)
+
 # Include API routers
 app.include_router(niches.router, prefix="/api/niches", tags=["niches"])
 app.include_router(competitors.router, prefix="/api/competitors", tags=["competitors"])
@@ -110,11 +116,70 @@ app.include_router(listings.router, prefix="/api/listings", tags=["listings"])
 app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
 app.include_router(stress.router, prefix="/api/stress", tags=["stress"])
 
-# Health check endpoint
+# Enhanced health check endpoints
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "kdp_strategist-api"}
+    """Basic health check endpoint for load balancers."""
+    health_checker = get_health_checker()
+    system_health = await health_checker.check_system_health(include_detailed=False)
+    
+    return {
+        "status": system_health.status.value,
+        "service": "kdp_strategist-api",
+        "timestamp": system_health.timestamp.isoformat(),
+        "uptime_seconds": system_health.uptime_seconds
+    }
+
+@app.get("/api/health/detailed")
+async def detailed_health_check():
+    """Detailed health check endpoint for monitoring systems."""
+    health_checker = get_health_checker()
+    system_health = await health_checker.check_system_health(include_detailed=True)
+    
+    return system_health.to_dict()
+
+@app.get("/api/health/ready")
+async def readiness_check():
+    """Readiness check for Kubernetes deployments."""
+    try:
+        health_checker = get_health_checker()
+        system_health = await health_checker.check_system_health(include_detailed=False)
+        
+        if system_health.status.value in ["healthy", "degraded"]:
+            return {"status": "ready", "message": "Service is ready to accept traffic"}
+        else:
+            return JSONResponse(
+                status_code=503,
+                content={"status": "not_ready", "message": "Service is not ready"}
+            )
+    except Exception as e:
+        logger.error(f"Readiness check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "message": "Readiness check failed"}
+        )
+
+@app.get("/api/health/live")
+async def liveness_check():
+    """Liveness check for Kubernetes deployments."""
+    try:
+        # Simple check to ensure the application is responsive
+        health_checker = get_health_checker()
+        app_health = await health_checker.check_application_health()
+        
+        if app_health.status.value != "unhealthy":
+            return {"status": "alive", "message": "Service is alive"}
+        else:
+            return JSONResponse(
+                status_code=503,
+                content={"status": "not_alive", "message": "Service is not responding"}
+            )
+    except Exception as e:
+        logger.error(f"Liveness check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_alive", "message": "Liveness check failed"}
+        )
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws")
@@ -132,15 +197,7 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """Global exception handler for unhandled errors."""
-    logger.error(f"Unhandled exception: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "type": "internal_error"}
-    )
+# Note: Global exception handler is registered via register_error_handlers()
 
 # Serve static files (React build) - will be added after UI is built
 # app.mount("/", StaticFiles(directory="ui/dist", html=True), name="ui")
