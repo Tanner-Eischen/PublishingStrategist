@@ -29,6 +29,13 @@ class ContentType(Enum):
     REFERENCE = "Reference"
     POETRY = "Poetry"
     DRAMA = "Drama"
+    JOURNAL = "Journal"
+    NOTEBOOK = "Notebook"
+    PLANNER = "Planner"
+    WORKBOOK = "Workbook"
+    LOG_BOOK = "Log Book"
+    COLORING_BOOK = "Coloring Book"
+    GUIDE = "Guide"
 
 
 class TargetAudience(Enum):

@@ -63,7 +63,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting KDP Strategist API...")
     try:
         # Initialize MCP agent
-        app.state.agent = await KDPStrategistAgent.create()
+        from config.settings import Settings
+        settings = Settings.from_env()
+        app.state.agent = KDPStrategistAgent(settings)
         logger.info("MCP Agent initialized successfully")
         yield
     except Exception as e:

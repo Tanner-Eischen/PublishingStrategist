@@ -85,12 +85,12 @@ class KDPStrategistAgent:
     def _init_api_clients(self) -> None:
         """Initialize external API clients."""
         # Initialize Keepa client
-        if self.settings.keepa.api_key:
+        if self.settings.api.keepa_api_key:
             keepa_config = KeepaConfig(
-                api_key=self.settings.keepa.api_key,
-                rate_limit_per_minute=self.settings.keepa.rate_limit_per_minute,
-                cache_ttl=self.settings.keepa.cache_ttl,
-                enable_caching=self.settings.keepa.enable_caching
+                api_key=self.settings.api.keepa_api_key,
+                rate_limit_per_minute=self.settings.api.keepa_rate_limit,
+                cache_ttl=self.settings.cache.keepa_ttl,
+                enable_caching=True
             )
             self.keepa_client = KeepaClient(keepa_config, self.cache_manager)
             logger.info("Keepa client initialized")
@@ -100,11 +100,11 @@ class KDPStrategistAgent:
         
         # Initialize Trends client
         trends_config = TrendsConfig(
-            geo=self.settings.trends.geo,
-            language=self.settings.trends.language,
-            rate_limit_delay=self.settings.trends.rate_limit_delay,
-            cache_ttl=self.settings.trends.cache_ttl,
-            enable_caching=self.settings.trends.enable_caching
+            geo="US",
+            language="en-US",
+            rate_limit_delay=2.0,
+            cache_ttl=self.settings.cache.trends_ttl,
+            enable_caching=True
         )
         self.trends_client = TrendsClient(trends_config, self.cache_manager)
         logger.info("Google Trends client initialized")

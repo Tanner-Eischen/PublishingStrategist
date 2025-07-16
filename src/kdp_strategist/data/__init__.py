@@ -9,12 +9,14 @@ This module provides data access and caching functionality including:
 """
 
 from .cache_manager import CacheManager, CacheConfig
-from .keepa_client import KeepaClient
-from .trends_client import TrendsClient
+from .keepa_client import KeepaClient, KeepaConfig
+from .trends_client import TrendsClient, TrendsConfig
 
 __all__ = [
     "CacheManager",
     "CacheConfig", 
     "KeepaClient",
+    "KeepaConfig",
     "TrendsClient",
+    "TrendsConfig",
 ]

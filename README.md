@@ -68,11 +68,18 @@ pip install -e .
 Create a `.env` file in the project root:
 
 ```env
+# Environment Configuration
+ENVIRONMENT=development
+DEBUG=true
+
 # API Configuration
 KEEPA_API_KEY=your_keepa_api_key_here
+KEEPA_RATE_LIMIT=60
+TRENDS_RATE_LIMIT=30
+API_REQUEST_TIMEOUT=30
 
 # Cache Configuration
-CACHE_TYPE=file  # Options: file, redis, memory
+CACHE_TYPE=file
 CACHE_TTL=3600
 CACHE_MAX_SIZE=1000
 
@@ -81,8 +88,12 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
 
-# Rate Limiting
-KEEPA_RATE_LIMIT=100
+# Business Logic Configuration
+MIN_PROFITABILITY_SCORE=50.0
+MAX_COMPETITION_SCORE=70.0
+TREND_WEIGHT=0.4
+COMPETITION_WEIGHT=0.3
+PROFITABILITY_WEIGHT=0.3
 TRENDS_RATE_LIMIT=50
 
 # Development

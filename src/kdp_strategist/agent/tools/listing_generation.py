@@ -510,7 +510,7 @@ class DescriptionGenerator:
         return ""
     
     @classmethod
-    def _generate_benefits_section(cls, content_type: ContentType, target_audience: udience) -> str:
+    def _generate_benefits_section(cls, content_type: ContentType, target_audience: TargetAudience) -> str:
         """Generate benefits section based on content type and audience."""
         benefits_map = {
             ContentType.JOURNAL: [

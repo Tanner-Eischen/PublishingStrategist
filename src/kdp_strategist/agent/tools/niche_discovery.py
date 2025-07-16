@@ -29,6 +29,8 @@ from ...models.niche_model import (
     CompetitionLevel,
     ProfitabilityTier,
     RiskLevel,
+    MarketSummary,
+    PriceRange,
 )
 from ...models.trend_model import TrendAnalysis, TrendDirection, TrendStrength
 
@@ -104,26 +106,25 @@ class NicheScorer:
         base_score = trend_analysis.trend_score
 
         # Adjust for trend direction
-        if trend_analysis.direction == TrendDirection.RISING:
+        if trend_analysis.trend_direction == TrendDirection.RISING.value:
             base_score *= 1.2
-        elif trend_analysis.direction == TrendDirection.DECLINING:
+        elif trend_analysis.trend_direction == TrendDirection.DECLINING.value:
             base_score *= 0.7
 
         # Adjust for trend strength
         strength_multipliers = {
-            TrendStrength.VERY_STRONG: 1.3,
-            TrendStrength.STRONG: 1.1,
-            TrendStrength.MODERATE: 1.0,
-            TrendStrength.WEAK: 0.8,
-            TrendStrength.VERY_WEAK: 0.5,
+            TrendStrength.VERY_STRONG.value: 1.3,
+            TrendStrength.STRONG.value: 1.1,
+            TrendStrength.MODERATE.value: 1.0,
+            TrendStrength.WEAK.value: 0.8,
+            TrendStrength.VERY_WEAK.value: 0.5,
         }
 
-        multiplier = strength_multipliers.get(trend_analysis.strength, 1.0)
+        multiplier = strength_multipliers.get(trend_analysis.trend_strength, 1.0)
         return min(100, base_score * multiplier)
 
-    @staticmethod
-
-    def _score_competition_level(competition_data: Optional[MarketSummary]) -> Optional[float]:
+    @classmethod
+    def _score_competition_level(cls, competition_data: Optional[MarketSummary]) -> Optional[float]:
 
         """Score based on competition analysis."""
         if not competition_data:
@@ -483,7 +484,7 @@ def _filter_promising_trends(
             continue
 
         # Avoid declining trends
-        if analysis.direction == TrendDirection.DECLINING and analysis.trend_score < 50:
+        if analysis.trend_direction == TrendDirection.DECLINING.value and analysis.trend_score < 50:
             continue
 
         # Require minimum confidence
@@ -556,52 +557,46 @@ async def _analyze_competition(
 
 
 async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[str, TrendAnalysis],
-                                    competition_data: Dict[str, Dict[str, Any]],
+                                    competition_data: Dict[str, MarketSummary],
                                     categories: Optional[List[str]]) -> List[Niche]:
-
     """Generate niche candidates from analyzed data."""
     niche_candidates = []
 
     for keyword in keywords:
         trend_analysis = trend_analyses.get(keyword)
-        competition = competition_data.get(keyword, {})
+        competition = competition_data.get(keyword, MarketSummary())
 
         if not trend_analysis:
             continue
 
-        # Estimate market metrics and derive market size score
+        # Estimate market metrics
         metrics = _estimate_market_size(trend_analysis, competition)
-        market_size_score = NicheScorer._score_market_size(metrics)
-
+        
         # Create niche object
-
-    niche = Niche(
-    category=categories[0] if categories else "Books & Journals",
-    primary_keyword=keyword,
-    keywords=[keyword] + trend_analysis.related_queries[:10],
-    trend_analysis_data=trend_analysis, # Pass TrendAnalysis object directly
-    competitor_analysis_data=competition,
-    market_size_score=_estimate_market_size(trend_analysis, competition),
-    seasonal_factors=trend_analysis.seasonal_patterns,
-        # Calculate and assign numeric scores directly during construction
-    profitability_score_numeric=NicheScorer.calculate_profitability_score({
-        "trend_analysis": trend_analysis,
-        "competition_data": competition,
-        "market_metrics": {"estimated_search_volume": _estimate_market_size(trend_analysis, competition) * 100},
-        "seasonal_patterns": trend_analysis.seasonal_patterns,
-        "content_analysis": {"identified_gaps": 5}
-    }),
-    competition_score_numeric=NicheScorer._score_competition_level(competition) or 0.0,
-        # `competition_level` and `profitability_tier` will be set in Niche's __post_init__
-    )
-    niche_candidates.append(niche)
-
-    
+        niche = Niche(
+            category=categories[0] if categories else "Books & Journals",
+            primary_keyword=keyword,
+            keywords=[keyword] + trend_analysis.related_queries[:10],
+            trend_analysis_data=trend_analysis,
+            competitor_analysis_data=competition,
+            market_size_score=NicheScorer._score_market_size(metrics) or 0.0,
+            seasonal_factors=trend_analysis.seasonal_patterns,
+            # Calculate and assign numeric scores directly during construction
+            profitability_score_numeric=NicheScorer.calculate_profitability_score({
+                "trend_analysis": trend_analysis,
+                "competition_data": competition,
+                "market_metrics": metrics,
+                "seasonal_patterns": trend_analysis.seasonal_patterns,
+                "content_analysis": {"identified_gaps": 5}
+            }),
+            competition_score_numeric=NicheScorer._score_competition_level(competition) or 0.0,
+        )
+        niche_candidates.append(niche)
 
     return niche_candidates
 
 
-def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: MarketSummary) -> float:
+def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: MarketSummary) -> Dict[str, Any]:
     """Estimate market size score based on trend and competition data."""
     base_score = trend_analysis.trend_score
     
@@ -618,6 +613,9 @@ def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: Marke
         category_size_score = 50.0
     else:
         category_size_score = 30.0
+
+    # Estimate search volume based on trend score
+    estimated_search_volume = int(base_score * 100)  # Simple estimation
 
     return {
         "estimated_search_volume": estimated_search_volume,
@@ -734,18 +732,18 @@ def _generate_recommendations(
             recommendations["quick_wins"].append({
                 "niche": niche.primary_keyword,
                 "score": niche.profitability_score_numeric,
-                "competitors": niche.competitor_analysis_data.get("count", 0)
+                "competitors": niche.competitor_analysis_data.competitor_count
             })
     
     # Identify long-term opportunities (high potential, manageable competition)
     for niche in top_niches[:10]:
         if (niche.profitability_score_numeric >= 75 and
             niche.trend_analysis_data and # Use the renamed field
-            niche.trend_analysis_data.direction == TrendDirection.RISING):
+            niche.trend_analysis_data.trend_direction == TrendDirection.RISING.value):
             recommendations["long_term_opportunities"].append({
                 "niche": niche.primary_keyword,
                 "score": niche.profitability_score_numeric,
-                "trend_direction": niche.trend_analysis_data.direction.value
+                "trend_direction": niche.trend_analysis_data.trend_direction
             })
 
     return recommendations

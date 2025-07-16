@@ -9,7 +9,10 @@ from typing import List, Tuple, Dict, Optional, Any
 from enum import Enum
 from datetime import datetime
 import json
-from src.kdp_strategist.models.trend_model import TrendAnalysis
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .trend_model import TrendAnalysis
 
 class CompetitionLevel(Enum):
         """Categorical representation of market competition."""
@@ -112,7 +115,7 @@ class Niche:
     profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
 
         # Detailed Analysis Data (store objects or dicts for flexibility)
-    trend_analysis_data: Optional[TrendAnalysis] = None  # Renamed, store TrendAnalysis object
+    trend_analysis_data: Optional['TrendAnalysis'] = None  # Renamed, store TrendAnalysis object
     competitor_analysis_data: MarketSummary = field(default_factory=MarketSummary)
     seasonal_factors: Dict[str, float] = field(default_factory=dict)
     content_gaps: List[str] = field(default_factory=list)
@@ -134,6 +137,35 @@ class Niche:
                 self.competition_level = self._determine_competition_level(self.competition_score_numeric)
             if self.profitability_score_numeric != 0.0:
                 self.profitability_tier = self._determine_profitability_tier(self.profitability_score_numeric)
+    
+    def _validate_scores(self) -> None:
+        """Validate that all scores are within valid ranges."""
+        scores = {
+            "competition_score_numeric": self.competition_score_numeric,
+            "profitability_score_numeric": self.profitability_score_numeric,
+            "market_size_score": self.market_size_score,
+            "confidence_score": self.confidence_score,
+        }
+        
+        for score_name, score_value in scores.items():
+            if not 0 <= score_value <= 100:
+                raise ValueError(f"{score_name} must be between 0 and 100, got {score_value}")
+    
+    def _validate_keywords(self) -> None:
+        """Validate keywords."""
+        if not self.primary_keyword or not self.primary_keyword.strip():
+            raise ValueError("Primary keyword cannot be empty")
+        
+        if not self.keywords:
+            self.keywords = [self.primary_keyword]
+    
+    def _validate_price_range(self) -> None:
+        """Validate price range."""
+        min_price, max_price = self.recommended_price_range
+        if min_price < 0 or max_price < 0:
+            raise ValueError("Price range values must be non-negative")
+        if min_price > max_price:
+            raise ValueError("Minimum price cannot be greater than maximum price")
 
         # Static methods to determine enum from numeric score (can be moved outside if preferred)
     @staticmethod
@@ -274,9 +306,11 @@ class Niche:
 
             # Deserialize nested TrendAnalysis object
             if "trend_analysis_data" in data and data["trend_analysis_data"] is not None:
+                from .trend_model import TrendAnalysis
                 data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis_data"])
             elif "trend_analysis" in data: # Handle old naming if exists
                  if data["trend_analysis"] is not None:
+                    from .trend_model import TrendAnalysis
                     data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis"])
                  data.pop("trend_analysis") # Remove old key
 

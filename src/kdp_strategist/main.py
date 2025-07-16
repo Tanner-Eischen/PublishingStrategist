@@ -28,8 +28,8 @@ import argparse
 src_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(src_dir))
 
-from config.settings import Settings, load_settings
-from agent.kdp_strategist_agent import KDPStrategistAgent
+from config.settings import Settings
+from .agent.kdp_strategist_agent import KDPStrategistAgent
 
 # Configure logging
 logging.basicConfig(
@@ -281,13 +281,13 @@ async def main() -> None:
     try:
         # Load configuration
         logger.info("Loading configuration...")
-        settings = load_settings(config_file=args.config)
+        settings = Settings.from_env()
         
         # Validate critical settings
-        if not settings.keepa.api_key and not settings.development_mode:
+        if not settings.api.keepa_api_key and settings.environment != "development":
             logger.warning("Keepa API key not configured. Some features may not work.")
         
-        logger.info(f"Configuration loaded. Development mode: {settings.development_mode}")
+        logger.info(f"Configuration loaded. Environment: {settings.environment}")
         
         if args.interactive:
             # Run in interactive mode
