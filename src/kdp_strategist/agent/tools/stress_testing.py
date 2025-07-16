@@ -30,7 +30,14 @@ import math
 from ...data.cache_manager import CacheManager
 from ...data.trends_client import TrendsClient
 from ...data.keepa_client import KeepaClient
-from ...models.niche_model import Niche, CompetitionLevel, ProfitabilityTier, RiskLevel
+from ...models.niche_model import (
+    Niche,
+    CompetitionLevel,
+    ProfitabilityTier,
+    RiskLevel,
+    MarketSummary,
+    PriceRange,
+)
 from ...models.trend_model import TrendAnalysis
 from .niche_discovery import NicheScorer
 from .trend_validation import TrendValidator
@@ -629,11 +636,17 @@ async def _create_niche_for_testing(
         trend_analysis = await trends_client.get_trend_analysis(keyword)
         
         # Simulate competitor analysis (in real implementation, this would use actual data)
-        competitor_data = {
-            "total_competitors": random.randint(50, 500),
-            "avg_price": random.uniform(10, 50),
-            "top_competitor_sales": random.randint(100, 1000)
-        }
+        competitor_data = MarketSummary(
+            competitor_count=random.randint(50, 500),
+            avg_review_count=random.uniform(10, 200),
+            avg_rating=random.uniform(3.0, 5.0),
+            price_range=PriceRange(
+                min=random.uniform(5, 15),
+                max=random.uniform(20, 50),
+                avg=random.uniform(10, 30),
+            ),
+            estimated=True,
+        )
         
         # Calculate scores using NicheScorer
         scorer = NicheScorer()
@@ -651,7 +664,10 @@ async def _create_niche_for_testing(
             # Pass TrendAnalysis object and competitor_data dict directly
             trend_analysis_data=trend_analysis,
             competitor_analysis_data=competitor_data,
-            recommended_price_range=(competitor_data["avg_price"] * 0.8, competitor_data["avg_price"] * 1.2),
+            recommended_price_range=(
+                competitor_data.price_range.avg * 0.8,
+                competitor_data.price_range.avg * 1.2,
+            ),
             content_gaps=["beginner guides", "advanced techniques", "case studies"],
             seasonal_factors={"volatility": random.uniform(0.2, 0.8)},
             # `competition_level` and `profitability_tier` will be set in Niche's __post_init__

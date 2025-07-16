@@ -87,16 +87,15 @@ class NicheScorer:
         return min(100, base_score * multiplier)
     
     @staticmethod
-    def _score_competition_level(competition_data: Optional[Dict[str, Any]]) -> Optional[float]:
+    def _score_competition_level(competition_data: Optional[MarketSummary]) -> Optional[float]:
         """Score based on competition analysis."""
         if not competition_data:
             return None
-        
+
         # Lower competition = higher score
-        competitor_count = competition_data.get("competitor_count", 0)
-        avg_reviews = competition_data.get("avg_review_count", 0)
-        avg_rating = competition_data.get("avg_rating", 0)
-        price_range = competition_data.get("price_range", {})
+        competitor_count = competition_data.competitor_count
+        avg_reviews = competition_data.avg_review_count
+        avg_rating = competition_data.avg_rating
         
         # Base score inversely related to competition
         if competitor_count == 0:
@@ -388,22 +387,25 @@ def _filter_promising_trends(trend_analyses: Dict[str, TrendAnalysis], min_trend
     return promising
 
 
-async def _analyze_competition(keepa_client: Optional[KeepaClient], keywords: List[str], 
-                              categories: Optional[List[str]]) -> Dict[str, Dict[str, Any]]:
+async def _analyze_competition(
+    keepa_client: Optional[KeepaClient],
+    keywords: List[str],
+    categories: Optional[List[str]],
+) -> Dict[str, MarketSummary]:
     """Analyze competition for keywords using Amazon/Keepa data."""
-    competition_data = {}
+    competition_data: Dict[str, MarketSummary] = {}
     
     if not keepa_client:
         logger.warning("No Keepa client available - using simulated competition data")
         # Return simulated data for development
         for keyword in keywords:
-            competition_data[keyword] = {
-                "competitor_count": len(keyword.split()) * 20,  # Rough estimate
-                "avg_review_count": 50,
-                "avg_rating": 4.0,
-                "price_range": {"min": 5.99, "max": 19.99, "avg": 12.99},
-                "estimated": True
-            }
+            competition_data[keyword] = MarketSummary(
+                competitor_count=len(keyword.split()) * 20,
+                avg_review_count=50,
+                avg_rating=4.0,
+                price_range=PriceRange(min=5.99, max=19.99, avg=12.99),
+                estimated=True,
+            )
         return competition_data
     
     # Analyze competition using Keepa search
@@ -417,27 +419,21 @@ async def _analyze_competition(keepa_client: Optional[KeepaClient], keywords: Li
                 review_counts = [p.review_count for p in products if p.review_count]
                 ratings = [p.rating for p in products if p.rating]
                 prices = [p.current_price for p in products if p.current_price]
-                
-                competition_data[keyword] = {
-                    "competitor_count": len(products),
-                    "avg_review_count": sum(review_counts) / len(review_counts) if review_counts else 0,
-                    "avg_rating": sum(ratings) / len(ratings) if ratings else 0,
-                    "price_range": {
-                        "min": min(prices) if prices else 0,
-                        "max": max(prices) if prices else 0,
-                        "avg": sum(prices) / len(prices) if prices else 0
-                    },
-                    "estimated": False
-                }
+
+                competition_data[keyword] = MarketSummary(
+                    competitor_count=len(products),
+                    avg_review_count=sum(review_counts) / len(review_counts) if review_counts else 0,
+                    avg_rating=sum(ratings) / len(ratings) if ratings else 0,
+                    price_range=PriceRange(
+                        min=min(prices) if prices else 0,
+                        max=max(prices) if prices else 0,
+                        avg=sum(prices) / len(prices) if prices else 0,
+                    ),
+                    estimated=False,
+                )
             else:
                 # No competition found
-                competition_data[keyword] = {
-                    "competitor_count": 0,
-                    "avg_review_count": 0,
-                    "avg_rating": 0,
-                    "price_range": {"min": 0, "max": 0, "avg": 0},
-                    "estimated": False
-                }
+                competition_data[keyword] = MarketSummary()
         
         except Exception as e:
             logger.warning(f"Failed to analyze competition for '{keyword}': {e}")
@@ -465,7 +461,7 @@ async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[s
     primary_keyword=keyword,
     keywords=[keyword] + trend_analysis.related_queries[:10],
     trend_analysis_data=trend_analysis, # Pass TrendAnalysis object directly
-    competitor_analysis_data=competition, # Pass competitor data as dict
+    competitor_analysis_data=competition,
     market_size_score=_estimate_market_size(trend_analysis, competition),
     seasonal_factors=trend_analysis.seasonal_patterns,
         # Calculate and assign numeric scores directly during construction
@@ -484,12 +480,12 @@ async def _generate_niche_candidates(keywords: List[str], trend_analyses: Dict[s
     return niche_candidates
 
 
-def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: Dict[str, Any]) -> float:
+def _estimate_market_size(trend_analysis: TrendAnalysis, competition_data: MarketSummary) -> float:
     """Estimate market size score based on trend and competition data."""
     base_score = trend_analysis.trend_score
     
     # Adjust for competition level
-    competitor_count = competition_data.get("competitor_count", 0)
+    competitor_count = competition_data.competitor_count
     if competitor_count == 0:
         competition_multiplier = 1.5  # No competition = larger opportunity
     elif competitor_count < 10:
