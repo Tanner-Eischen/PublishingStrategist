@@ -7,7 +7,7 @@ integrating with the existing MCP agent's competitor analysis tool.
 import logging
 from typing import Dict, Any, List
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 
 from ..models.requests import CompetitorAnalysisRequest
@@ -24,19 +24,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_agent():
+def get_agent(request: Request):
     """Dependency to get the MCP agent from app state."""
-    from fastapi import Request
-    
-    def _get_agent(request: Request):
-        if not hasattr(request.app.state, 'agent'):
-            raise HTTPException(
-                status_code=503,
-                detail="MCP agent not available"
-            )
-        return request.app.state.agent
-    
-    return _get_agent
+    if not hasattr(request.app.state, 'agent'):
+        raise HTTPException(
+            status_code=503,
+            detail="MCP agent not available"
+        )
+    return request.app.state.agent
 
 
 def convert_mcp_competitor_to_api(mcp_competitor: Dict[str, Any]) -> CompetitorData:
@@ -215,7 +210,7 @@ def identify_opportunities(competitors: List[CompetitorData]) -> List[str]:
 async def analyze_competitors(
     request: CompetitorAnalysisRequest,
     background_tasks: BackgroundTasks,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Analyze competitors based on ASINs.
     
@@ -232,12 +227,46 @@ async def analyze_competitors(
             "include_trends": request.include_trends
         }
         
-        # Call MCP agent's competitor analysis method
-        mcp_result = await agent.analyze_competitors(
-            niche=request.asins[0] if request.asins else "general",
-            analysis_depth=request.analysis_depth,
-            include_trends=request.include_trends
-        )
+        # Call MCP agent's competitor analysis method for each ASIN
+        all_competitors = []
+        for asin in request.asins:
+            try:
+                # Try the correct method name first
+                try:
+                    mcp_result = await agent.analyze_competitor_asin(
+                        asin=asin,
+                        include_variations=False,
+                        analyze_reviews=True,
+                        historical_data=request.include_trends
+                    )
+                except AttributeError:
+                    # Fallback to alternative method name
+                    mcp_result = await agent.analyze_competitor(
+                        asin=asin,
+                        include_variations=False,
+                        analyze_reviews=True,
+                        historical_data=request.include_trends
+                    )
+                
+                if mcp_result and 'competitor_data' in mcp_result:
+                    all_competitors.append(mcp_result['competitor_data'])
+                elif mcp_result:
+                    # If the result structure is different, use the whole result
+                    all_competitors.append(mcp_result)
+            except Exception as e:
+                logger.warning(f"Failed to analyze ASIN {asin}: {e}")
+                # Continue with other ASINs
+                continue
+        
+        # Create a combined result
+        mcp_result = {
+            'competitors': all_competitors,
+            'market_overview': {
+                'total_analyzed': len(all_competitors),
+                'analysis_depth': request.analysis_depth,
+                'include_trends': request.include_trends
+            }
+        }
         
         # Convert MCP result to API format
         competitors = [
@@ -288,7 +317,7 @@ async def search_competitors(
     keyword: str,
     limit: int = 10,
     category: str = None,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Search for competitors by keyword.
     

@@ -7,12 +7,10 @@ market niches with scoring, competition analysis, and profitability metrics.
 from dataclasses import dataclass, field, asdict
 from typing import List, Tuple, Dict, Optional, Any
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
+import uuid
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .trend_model import TrendAnalysis
 
 class CompetitionLevel(Enum):
         """Categorical representation of market competition."""
@@ -73,6 +71,13 @@ class MarketSummary:
     avg_rating: float = 0.0
     price_range: PriceRange = field(default_factory=PriceRange)
     estimated: bool = False
+    top_competitor_asins: List[str] = field(default_factory=list)
+    market_saturation: Optional[float] = None
+    data_source: Optional[str] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
 
 
 @dataclass
@@ -115,7 +120,7 @@ class Niche:
     profitability_tier: ProfitabilityTier = ProfitabilityTier.MEDIUM # NEW field
 
         # Detailed Analysis Data (store objects or dicts for flexibility)
-    trend_analysis_data: Optional['TrendAnalysis'] = None  # Renamed, store TrendAnalysis object
+    # Trends functionality removed - trend_analysis_data field removed
     competitor_analysis_data: MarketSummary = field(default_factory=MarketSummary)
     seasonal_factors: Dict[str, float] = field(default_factory=dict)
     content_gaps: List[str] = field(default_factory=list)
@@ -304,15 +309,11 @@ class Niche:
             if "risk_level" in data and isinstance(data["risk_level"], str): # Deserialize if stored
                 data.pop("risk_level") # This is a computed property, remove before init
 
-            # Deserialize nested TrendAnalysis object
-            if "trend_analysis_data" in data and data["trend_analysis_data"] is not None:
-                from .trend_model import TrendAnalysis
-                data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis_data"])
-            elif "trend_analysis" in data: # Handle old naming if exists
-                 if data["trend_analysis"] is not None:
-                    from .trend_model import TrendAnalysis
-                    data["trend_analysis_data"] = TrendAnalysis.from_dict(data["trend_analysis"])
-                 data.pop("trend_analysis") # Remove old key
+            # Trends functionality removed - trend analysis deserialization removed
+            if "trend_analysis_data" in data:
+                data.pop("trend_analysis_data")  # Remove trend data if present
+            if "trend_analysis" in data:
+                data.pop("trend_analysis")  # Remove old trend data if present
 
             # Deserialize competitor analysis data
             if "competitor_analysis_data" in data and isinstance(data["competitor_analysis_data"], dict):
@@ -343,3 +344,53 @@ class Niche:
             filtered_data.pop('estimated_monthly_searches', None) # Remove if it was serialized
 
             return cls(**filtered_data)
+
+@dataclass
+class NicheAnalysis:
+    """Container for niche analysis results."""
+    keywords: List[str]
+    niches: List['Niche']
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: datetime = field(default_factory=datetime.now)
+    expires_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def is_expired(self) -> bool:
+        """Check if the analysis has expired."""
+        if self.expires_at is None:
+            return False
+        return datetime.now() > self.expires_at
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            'id': self.id,
+            'keywords': self.keywords,
+            'niches': [niche.to_dict() for niche in self.niches],
+            'created_at': self.created_at.isoformat(),
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'metadata': self.metadata
+        }
+    
+    def filter_by_profitability(self, min_score: float) -> List['Niche']:
+        """Filter niches by minimum profitability score."""
+        return [niche for niche in self.niches if niche.profitability_score_numeric >= min_score]
+    
+    def filter_by_competition(self, max_level: CompetitionLevel) -> List['Niche']:
+        """Filter niches by maximum competition level."""
+        level_order = {CompetitionLevel.LOW: 1, CompetitionLevel.MEDIUM: 2, CompetitionLevel.HIGH: 3}
+        max_order = level_order[max_level]
+        
+        return [niche for niche in self.niches if level_order[niche.competition_level] <= max_order]
+    
+    def rank_by_profitability(self) -> List['Niche']:
+        """Rank niches by profitability score (highest first)."""
+        return sorted(self.niches, key=lambda x: x.profitability_score_numeric, reverse=True)
+    
+    def rank_by_overall_score(self) -> List['Niche']:
+        """Rank niches by overall score combining multiple factors."""
+        # Use the built-in overall_score property for ranking
+        return sorted(self.niches, key=lambda x: x.overall_score, reverse=True)
+
+
+# MarketSummary class definition moved to top of file to avoid duplication

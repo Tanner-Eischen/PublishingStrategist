@@ -7,7 +7,7 @@ integrating with the existing MCP agent's listing generation tool.
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 
 from ..models.requests import ListingGenerationRequest
@@ -23,19 +23,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_agent():
+def get_agent(request: Request):
     """Dependency to get the MCP agent from app state."""
-    from fastapi import Request
-    
-    def _get_agent(request: Request):
-        if not hasattr(request.app.state, 'agent'):
-            raise HTTPException(
-                status_code=503,
-                detail="MCP agent not available"
-            )
-        return request.app.state.agent
-    
-    return _get_agent
+    if not hasattr(request.app.state, 'agent'):
+        raise HTTPException(
+            status_code=503,
+            detail="MCP agent not available"
+        )
+    return request.app.state.agent
 
 
 def convert_mcp_listing_to_api(mcp_listing: Dict[str, Any]) -> ListingData:
@@ -172,7 +167,7 @@ def check_kdp_compliance(listing: ListingData) -> Dict[str, bool]:
 async def generate_listing(
     request: ListingGenerationRequest,
     background_tasks: BackgroundTasks,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Generate optimized KDP listing.
     
@@ -192,13 +187,23 @@ async def generate_listing(
         }
         
         # Call MCP agent's listing generation method
-        mcp_result = await agent.generate_listing(
-            niche=request.niche,
-            target_audience=request.target_audience,
-            book_type=request.book_type,
-            include_keywords=request.include_keywords,
-            tone=request.tone
-        )
+        try:
+            mcp_result = await agent.generate_kdp_listing(
+                niche=request.niche,
+                target_audience=request.target_audience,
+                book_type=request.book_type,
+                include_keywords=request.include_keywords,
+                tone=request.tone
+            )
+        except AttributeError:
+            # Fallback if method name is different
+            mcp_result = await agent.generate_listing(
+                niche=request.niche,
+                target_audience=request.target_audience,
+                book_type=request.book_type,
+                include_keywords=request.include_keywords,
+                tone=request.tone
+            )
         
         # Convert MCP result to API format
         listing = convert_mcp_listing_to_api(mcp_result.get('listing', {}))
@@ -244,7 +249,7 @@ async def optimize_existing_listing(
     title: str,
     description: str,
     keywords: list[str] = None,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Optimize an existing listing.
     
@@ -282,11 +287,19 @@ async def optimize_existing_listing(
         }
         
         try:
-            mcp_result = await agent.generate_listing(
-                niche="optimization",
-                target_audience="general",
-                book_type="general"
-            )
+            # Try to generate optimized version
+            try:
+                mcp_result = await agent.generate_kdp_listing(
+                    niche="optimization",
+                    target_audience="general",
+                    book_type="general"
+                )
+            except AttributeError:
+                mcp_result = await agent.generate_listing(
+                    niche="optimization",
+                    target_audience="general",
+                    book_type="general"
+                )
             
             optimized_listing = convert_mcp_listing_to_api(mcp_result.get('listing', {}))
             optimized_score = calculate_optimization_score(optimized_listing)

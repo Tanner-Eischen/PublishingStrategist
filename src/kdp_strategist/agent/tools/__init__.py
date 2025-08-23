@@ -15,13 +15,12 @@ data sources and caching for optimal performance.
 from .niche_discovery import find_profitable_niches
 from .competitor_analysis import analyze_competitor_asin
 from .listing_generation import generate_kdp_listing
-from .trend_validation import validate_trend
+# Trends functionality removed - trend_validation module removed
 from .stress_testing import niche_stress_test
 
 __all__ = [
     "find_profitable_niches",
     "analyze_competitor_asin",
     "generate_kdp_listing",
-    "validate_trend",
     "niche_stress_test"
 ]

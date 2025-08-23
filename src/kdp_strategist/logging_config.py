@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from enum import Enum
 
-from config.settings import LoggingConfig
+from config.settings import get_settings
 
 
 class LogLevel(Enum):
@@ -89,8 +89,10 @@ class ContextFilter(logging.Filter):
 class LoggingManager:
     """Centralized logging configuration manager."""
     
-    def __init__(self, config: LoggingConfig):
-        self.config = config
+    def __init__(self, config=None):
+        from config.settings import get_settings
+        settings = get_settings()
+        self.config = config or settings.logging
         self.is_configured = False
         self._loggers: Dict[str, logging.Logger] = {}
     
@@ -275,14 +277,14 @@ class LoggingManager:
 _logging_manager: Optional[LoggingManager] = None
 
 
-def get_logging_manager(config: Optional[LoggingConfig] = None) -> LoggingManager:
+def get_logging_manager(config=None) -> LoggingManager:
     """Get the global logging manager instance."""
     global _logging_manager
     
     if _logging_manager is None:
         if config is None:
-            from config.settings import Settings
-            settings = Settings.from_env()
+            from config.settings import get_settings
+            settings = get_settings()
             config = settings.logging
         
         _logging_manager = LoggingManager(config)
@@ -297,7 +299,7 @@ def get_logger(name: str) -> logging.Logger:
     return manager.get_logger(name)
 
 
-def configure_logging(config: Optional[LoggingConfig] = None) -> None:
+def configure_logging(config=None) -> None:
     """Configure logging for the application."""
     manager = get_logging_manager(config)
     manager.configure_logging()

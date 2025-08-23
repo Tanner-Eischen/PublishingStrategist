@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Components
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
-import LoadingSpinner from './components/common/LoadingSpinner';
+
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { cn } from './lib/utils';
 
@@ -18,6 +18,7 @@ import ListingGeneration from './pages/ListingGeneration';
 import TrendValidation from './pages/TrendValidation';
 import StressTesting from './pages/StressTesting';
 import Settings from './pages/Settings';
+import ProgressDemo from './pages/ProgressDemo';
 
 // Services
 import { apiService } from './services/api';
@@ -43,10 +44,9 @@ export const useApi = () => {
 };
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
+
   const [apiSettings, setApiSettings] = useState({ api_key: '', api_endpoint: '' });
 
   useEffect(() => {
@@ -56,7 +56,6 @@ function App() {
 
   const initializeApp = async () => {
     try {
-      setIsLoading(true);
       
       // Load and apply saved API settings
       const savedSettings = localStorage.getItem('kdp_strategist_settings');
@@ -81,25 +80,17 @@ function App() {
       }
       
       // Check API health
-      const healthCheck = await apiService.checkHealth();
-      setIsConnected(healthCheck.status === 'healthy');
+      const healthCheck = await apiService.healthCheck();
+      // Accept both 'healthy' and 'degraded' status as connected
+      setIsConnected(healthCheck.status === 'healthy' || healthCheck.status === 'degraded');
       
       // Initialize user session (if needed)
       // For now, we'll use a default user
-      setCurrentUser({
-        id: 'default',
-        name: 'KDP Strategist User',
-        preferences: {
-          theme: 'light',
-          defaultExportFormat: 'csv'
-        }
-      });
+      // User session initialization removed as currentUser is not used
       
     } catch (error) {
       console.error('Failed to initialize app:', error);
       setIsConnected(false);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -123,10 +114,12 @@ function App() {
       }
       
       // Test connection
-      const healthCheck = await apiService.checkHealth();
-      setIsConnected(healthCheck.status === 'healthy');
+      const healthCheck = await apiService.healthCheck();
+      // Accept both 'healthy' and 'degraded' status as connected
+      const isHealthy = healthCheck.status === 'healthy' || healthCheck.status === 'degraded';
+      setIsConnected(isHealthy);
       
-      return { success: true, connected: healthCheck.status === 'healthy' };
+      return { success: true, connected: isHealthy };
     } catch (error) {
       console.error('Error updating API settings:', error);
       setIsConnected(false);
@@ -137,9 +130,11 @@ function App() {
   // Function to refresh connection
   const refreshConnection = async () => {
     try {
-      const healthCheck = await apiService.checkHealth();
-      setIsConnected(healthCheck.status === 'healthy');
-      return healthCheck.status === 'healthy';
+      const healthCheck = await apiService.healthCheck();
+      // Accept both 'healthy' and 'degraded' status as connected
+      const isHealthy = healthCheck.status === 'healthy' || healthCheck.status === 'degraded';
+      setIsConnected(isHealthy);
+      return isHealthy;
     } catch (error) {
       console.error('Connection refresh failed:', error);
       setIsConnected(false);
@@ -151,13 +146,13 @@ function App() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="large" message="Initializing KDP Strategist..." />
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <LoadingSpinner size="large" message="Initializing KDP Strategist..." />
+  //     </div>
+  //   );
+  // }
 
   if (!isConnected) {
     return (
@@ -210,6 +205,7 @@ function App() {
                   <Route path="/listing-generation" element={<ListingGeneration />} />
                   <Route path="/trend-validation" element={<TrendValidation />} />
                   <Route path="/stress-testing" element={<StressTesting />} />
+                  <Route path="/progress-demo" element={<ProgressDemo />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

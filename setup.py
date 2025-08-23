@@ -51,7 +51,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "kdp_strategist=kdp_strategist.cli:main",
+            "kdp_strategist=kdp_strategist.main:main",
+            "kdp_strategist_mcp=kdp_strategist.mcp_server:main",
         ],
     },
     include_package_data=True,

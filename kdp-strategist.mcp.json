@@ -47,13 +47,6 @@
         }
       },
       {
-        "name": "validate_trend",
-        "description": "Validates niche momentum using Google Trends",
-        "input_schema": {
-          "keyword": "string"
-        }
-      },
-      {
         "name": "niche_stress_test",
         "description": "Checks if a niche idea is over-saturated or profitable",
         "input_schema": {

@@ -7,7 +7,7 @@ integrating with the existing MCP agent's niche discovery tool.
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 
 from ..models.requests import NicheDiscoveryRequest
@@ -24,38 +24,65 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_agent():
+def get_agent(request: Request):
     """Dependency to get the MCP agent from app state."""
-    from fastapi import Request
-    
-    def _get_agent(request: Request):
-        if not hasattr(request.app.state, 'agent'):
-            raise HTTPException(
-                status_code=503,
-                detail="MCP agent not available"
-            )
-        return request.app.state.agent
-    
-    return _get_agent
+    if not hasattr(request.app.state, 'agent'):
+        raise HTTPException(
+            status_code=503,
+            detail="MCP agent not available"
+        )
+    return request.app.state.agent
 
 
 def convert_mcp_niche_to_api(mcp_niche: Dict[str, Any]) -> NicheData:
     """Convert MCP agent niche data to API response format."""
+    from src.kdp_strategist.models.niche_model import CompetitionLevel, ProfitabilityTier, RiskLevel
+    
+    # Handle trend direction
     trend_data = mcp_niche.get("trend_analysis_data") or {}
     if not isinstance(trend_data, dict):
         trend_direction = getattr(trend_data, "trend_direction", "stable")
     else:
         trend_direction = trend_data.get("trend_direction", "stable")
 
+    # Calculate search volume from market size score
     market_size_score = float(mcp_niche.get("market_size_score", 0))
     search_volume = int(market_size_score * 100)
+
+    # Handle enum conversions with fallbacks
+    competition_level_str = mcp_niche.get("competition_level", "medium")
+    if isinstance(competition_level_str, str):
+        try:
+            competition_level = CompetitionLevel(competition_level_str.lower())
+        except ValueError:
+            competition_level = CompetitionLevel.MEDIUM
+    else:
+        competition_level = competition_level_str
+
+    profitability_tier_str = mcp_niche.get("profitability_tier", "medium")
+    if isinstance(profitability_tier_str, str):
+        try:
+            profitability_tier = ProfitabilityTier(profitability_tier_str.lower())
+        except ValueError:
+            profitability_tier = ProfitabilityTier.MEDIUM
+    else:
+        profitability_tier = profitability_tier_str
+
+    risk_level_str = mcp_niche.get("risk_level", "medium")
+    if isinstance(risk_level_str, str):
+        try:
+            risk_level = RiskLevel(risk_level_str.lower())
+        except ValueError:
+            risk_level = RiskLevel.MEDIUM
+    else:
+        risk_level = risk_level_str
 
     return NicheData(
         name=mcp_niche.get("primary_keyword", mcp_niche.get("name", "")),
         score=float(mcp_niche.get("profitability_score_numeric", mcp_niche.get("profitability_score", 0))),
-        competition_level=mcp_niche.get("competition_level", "unknown"),
-        profitability_tier=mcp_niche.get("profitability_tier", "medium"),
-        risk_level=mcp_niche.get("risk_level", "medium"),
+        competition_level=competition_level,
+        profitability_tier=profitability_tier,
+        risk_level=risk_level,
         search_volume=search_volume,
         trend_direction=trend_direction,
         keywords=mcp_niche.get("keywords", []),
@@ -84,14 +111,14 @@ def create_niche_charts(niches: list[NicheData]) -> list[ChartData]:
     # Competition level distribution
     competition_counts = {}
     for niche in niches:
-        level = niche.competition_level
+        level = niche.competition_level.value if hasattr(niche.competition_level, 'value') else str(niche.competition_level)
         competition_counts[level] = competition_counts.get(level, 0) + 1
     
     charts.append(ChartData(
         type="pie",
         title="Competition Level Distribution",
         data=[
-            {"label": level, "value": count}
+            {"label": level.title(), "value": count}
             for level, count in competition_counts.items()
         ],
         colors=["#10B981", "#F59E0B", "#EF4444"]
@@ -114,36 +141,133 @@ def create_niche_charts(niches: list[NicheData]) -> list[ChartData]:
     return charts
 
 
-@router.post("/discover", response_model=NicheDiscoveryResponse)
+@router.post(
+    "/discover", 
+    response_model=NicheDiscoveryResponse,
+    summary="Discover Profitable Niches",
+    description="""
+    Analyze keywords to identify profitable publishing niches using AI-powered market analysis.
+    
+    This endpoint combines multiple data sources including Google Trends and Amazon market data
+    to provide comprehensive niche analysis with profitability scoring, competition assessment,
+    and market opportunity identification.
+    
+    **Rate Limit**: 10 requests per hour per IP address
+    
+    **Processing Time**: 30-120 seconds depending on keyword count and market complexity
+    
+    **WebSocket Support**: Real-time progress updates available via WebSocket connection
+    """,
+    responses={
+        200: {
+            "description": "Successful niche discovery analysis",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "success",
+                        "niches": [
+                            {
+                                "name": "productivity journal",
+                                "score": 78.5,
+                                "competition_level": "medium",
+                                "profitability_tier": "high",
+                                "risk_level": "low",
+                                "search_volume": 12000,
+                                "trend_direction": "rising",
+                                "keywords": ["productivity", "journal", "planner"],
+                                "estimated_revenue": 2500.0,
+                                "barriers_to_entry": ["Content creation", "Design skills"]
+                            }
+                        ],
+                        "total_analyzed": 1,
+                        "recommendations": [
+                            "Consider focusing on 'productivity journal' with the highest profitability score of 78.5"
+                        ]
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid input parameters"},
+        429: {"description": "Rate limit exceeded"},
+        504: {"description": "Request timeout"},
+        500: {"description": "Internal server error"}
+    }
+)
 async def discover_niches(
     request: NicheDiscoveryRequest,
     background_tasks: BackgroundTasks,
-    agent=Depends(get_agent())
+    http_request: Request,
+    agent=Depends(get_agent)
 ):
     """Discover profitable niches based on keywords.
     
     This endpoint analyzes the provided keywords to identify profitable
-    niches using the MCP agent's niche discovery tool.
+    niches using the MCP agent's niche discovery tool with comprehensive
+    market analysis including trend validation, competition assessment,
+    and profitability scoring.
     """
     try:
         logger.info(f"Starting niche discovery for keywords: {request.base_keywords}")
         
+        # Generate analysis ID for WebSocket tracking
+        import uuid
+        analysis_id = f"niche_discovery_{uuid.uuid4().hex[:8]}"
+        
+        # Get WebSocket manager from app state
+        from fastapi import Request
+        from api.main import manager
+        
+        # Start WebSocket progress tracking if client_id provided in headers
+        client_id = http_request.headers.get('X-Client-ID')
+        if client_id and client_id in manager.active_connections:
+            manager.start_analysis(analysis_id, client_id, 'niche_discovery', {
+                'base_keywords': request.base_keywords,
+                'max_niches': request.max_niches,
+                'filters': request.filters
+            })
+            
+            # Send initial progress update
+            await manager.update_analysis_progress(analysis_id, 0, 0, 'in-progress')
+        
         # Prepare parameters for MCP agent
         mcp_params = {
             "base_keywords": request.base_keywords,
-            "max_niches": request.max_niches
+            "max_niches": request.max_niches,
+            "analysis_id": analysis_id  # Pass analysis ID for progress tracking
         }
         
         # Add filters if provided
         if request.filters:
             mcp_params.update(request.filters)
         
-        # Call MCP agent's niche discovery method
-        mcp_result = await agent.discover_niches(
-            keywords=request.base_keywords,
-            max_niches=request.max_niches,
-            **(request.filters or {})
-        )
+        # Progress callback for WebSocket updates
+        async def progress_callback(step: int, total_steps: int, message: str = None):
+            if client_id and client_id in manager.active_connections:
+                progress = int((step / total_steps) * 100)
+                await manager.update_analysis_progress(
+                    analysis_id, progress, step, 'in-progress', message
+                )
+        
+        # Create progress tracker for WebSocket integration
+        progress_tracker = None
+        if client_id and client_id in manager.active_connections:
+            from src.kdp_strategist.progress_tracker import ProgressTracker
+            progress_tracker = ProgressTracker(analysis_id, manager)
+        
+        # Call MCP agent's niche discovery method with progress tracking
+        try:
+            mcp_result = await agent.find_profitable_niches(
+                base_keywords=request.base_keywords,
+                max_niches=request.max_niches,
+                **(request.filters or {})
+            )
+        except AttributeError:
+            # Fallback if method name is different
+            mcp_result = await agent.discover_niches(
+                keywords=request.base_keywords,
+                max_niches=request.max_niches,
+                **(request.filters or {})
+            )
         
         # Convert MCP result to API format
         niches = [
@@ -162,7 +286,8 @@ async def discover_niches(
                 f"Consider focusing on '{top_niche.name}' with the highest profitability score of {top_niche.score:.1f}"
             )
             
-            low_competition = [n for n in niches if n.competition_level == 'low']
+            from src.kdp_strategist.models.niche_model import CompetitionLevel
+            low_competition = [n for n in niches if n.competition_level == CompetitionLevel.LOW]
             if low_competition:
                 recommendations.append(
                     f"Found {len(low_competition)} low-competition niches for easier market entry"
@@ -184,14 +309,39 @@ async def discover_niches(
             recommendations=recommendations
         )
         
+        # Send completion notification via WebSocket
+        if client_id and client_id in manager.active_connections:
+            await manager.complete_analysis(analysis_id, response.dict())
+        
         logger.info(f"Niche discovery completed. Found {len(niches)} niches")
         return response
         
+    except ValueError as e:
+        logger.error(f"Invalid input for niche discovery: {str(e)}")
+        # Send error notification via WebSocket
+        if 'client_id' in locals() and client_id and client_id in manager.active_connections:
+            await manager.error_analysis(analysis_id, f"Invalid input parameters: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid input parameters: {str(e)}"
+        )
+    except TimeoutError as e:
+        logger.error(f"Timeout in niche discovery: {str(e)}")
+        # Send error notification via WebSocket
+        if 'client_id' in locals() and client_id and client_id in manager.active_connections:
+            await manager.error_analysis(analysis_id, "Request timeout - please try again with fewer keywords")
+        raise HTTPException(
+            status_code=504,
+            detail="Request timeout - please try again with fewer keywords or reduce max_niches"
+        )
     except Exception as e:
-        logger.error(f"Error in niche discovery: {str(e)}")
+        logger.error(f"Unexpected error in niche discovery: {str(e)}")
+        # Send error notification via WebSocket
+        if 'client_id' in locals() and client_id and client_id in manager.active_connections:
+            await manager.error_analysis(analysis_id, f"Internal server error: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to discover niches: {str(e)}"
+            detail="Internal server error - please try again later"
         )
 
 
@@ -199,7 +349,7 @@ async def discover_niches(
 async def get_trending_niches(
     limit: int = 10,
     timeframe: str = "7d",
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Get currently trending niches.
     
@@ -217,16 +367,17 @@ async def get_trending_niches(
         ]
         
         # Call the niche discovery with trending keywords
-        mcp_params = {
-            "base_keywords": trending_keywords[:limit//2],  # Use subset
-            "max_niches": limit,
-            "trending_only": True
-        }
-        
-        mcp_result = await agent.discover_niches(
-            keywords=trending_keywords[:limit//2],
-            max_niches=limit
-        )
+        try:
+            mcp_result = await agent.find_profitable_niches(
+                base_keywords=trending_keywords[:limit//2],
+                max_niches=limit
+            )
+        except AttributeError:
+            # Fallback if method name is different
+            mcp_result = await agent.discover_niches(
+                keywords=trending_keywords[:limit//2],
+                max_niches=limit
+            )
         
         # Convert and format response
         niches = [

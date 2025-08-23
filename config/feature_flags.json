@@ -1,0 +1,61 @@
+{
+  "use_simple_trends": {
+    "state": "percentage",
+    "percentage": 100.0,
+    "description": "Gradually migrate traffic to Simple Trends system",
+    "enabled_for_users": [],
+    "disabled_for_users": [],
+    "start_time": null,
+    "end_time": null,
+    "metadata": {
+      "created": "2025-01-28T00:00:00",
+      "migration_phase": "initial",
+      "target_percentage": 100.0,
+      "rollout_schedule": "gradual"
+    }
+  },
+  "enable_a_b_testing": {
+    "state": "disabled",
+    "a_b_split": 30.0,
+    "description": "A/B test Simple Trends vs Google Trends",
+    "enabled_for_users": [],
+    "disabled_for_users": [],
+    "start_time": null,
+    "end_time": null,
+    "metadata": {
+      "test_duration_days": 7,
+      "success_metrics": [
+        "response_time",
+        "success_rate",
+        "confidence_level"
+      ],
+      "minimum_sample_size": 100
+    }
+  },
+  "force_simple_trends": {
+    "state": "disabled",
+    "description": "Force all traffic to Simple Trends (emergency switch)",
+    "enabled_for_users": [],
+    "disabled_for_users": [],
+    "start_time": null,
+    "end_time": null,
+    "metadata": {
+      "emergency_contact": "admin@kdpstrategist.com",
+      "rollback_procedure": "disable_force_simple_trends",
+      "monitoring_required": true
+    }
+  },
+  "performance_monitoring": {
+    "state": "enabled",
+    "description": "Enable performance monitoring for feature flags",
+    "metadata": {
+      "metrics_retention_days": 30,
+      "alert_thresholds": {
+        "response_time_ms": 2000,
+        "success_rate_percent": 95.0,
+        "error_rate_percent": 5.0
+      },
+      "reporting_interval_minutes": 15
+    }
+  }
+}

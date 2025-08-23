@@ -28,8 +28,8 @@ import random
 import math
 
 from ...data.cache_manager import CacheManager
-from ...data.trends_client import TrendsClient
-from ...data.keepa_client import KeepaClient
+# Trends functionality removed - no longer importing TrendsClient
+# from ...data.keepa_client import KeepaClient
 from ...models.niche_model import (
     Niche,
     CompetitionLevel,
@@ -38,9 +38,10 @@ from ...models.niche_model import (
     MarketSummary,
     PriceRange,
 )
-from ...models.trend_model import TrendAnalysis
+# Trends functionality removed - no longer importing TrendAnalysis
+# from ...models.trend_model import TrendAnalysis
 from .niche_discovery import NicheScorer
-from .trend_validation import TrendValidator
+# Trends functionality removed - trend_validation module removed
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +191,7 @@ class StressTester:
         cls,
         niche: Niche,
         scenario_params: StressTestParameters,
-        trend_analysis: Optional[TrendAnalysis] = None
+        trend_analysis: Optional[Any] = None  # TrendAnalysis type removed
     ) -> ScenarioResult:
         """Simulate a single stress test scenario."""
         initial_score = niche.overall_score
@@ -250,7 +251,7 @@ class StressTester:
         cls,
         niche: Niche,
         scenario_params: StressTestParameters,
-        trend_analysis: Optional[TrendAnalysis] = None
+        trend_analysis: Optional[Any] = None  # TrendAnalysis type removed
     ) -> float:
         """Calculate the impact of stress on the niche."""
         base_impact = scenario_params.severity * 0.5  # Base 50% max impact
@@ -474,8 +475,7 @@ class StressTester:
 
 
 async def niche_stress_test(
-    trends_client: TrendsClient,
-    keepa_client: KeepaClient,
+    keepa_client: Any,
     cache_manager: CacheManager,
     niche_keyword: str,
     custom_scenarios: Optional[List[StressTestParameters]] = None,
@@ -484,7 +484,6 @@ async def niche_stress_test(
     """Perform comprehensive stress testing on a niche.
     
     Args:
-        trends_client: Google Trends client
         keepa_client: Keepa API client
         cache_manager: Cache manager
         niche_keyword: Primary keyword for the niche
@@ -499,7 +498,7 @@ async def niche_stress_test(
     try:
         # First, we need to create/retrieve the niche data
         niche = await _create_niche_for_testing(
-            trends_client, keepa_client, cache_manager, niche_keyword
+            keepa_client, cache_manager, niche_keyword
         )
         
         if not niche:
@@ -509,12 +508,7 @@ async def niche_stress_test(
                 "test_timestamp": datetime.now().isoformat()
             }
         
-        # Get trend analysis for enhanced testing
-        trend_analysis = None
-        try:
-            trend_analysis = await trends_client.get_trend_analysis(niche_keyword)
-        except Exception as e:
-            logger.warning(f"Could not get trend analysis: {e}")
+        # Trend analysis functionality removed - using synthetic data for testing
         
         # Determine scenarios to test
         scenarios_to_test = []
@@ -642,15 +636,14 @@ async def niche_stress_test(
 
 
 async def _create_niche_for_testing(
-    trends_client: TrendsClient,
-    keepa_client: KeepaClient,
+    keepa_client: Any,
     cache_manager: CacheManager,
     keyword: str
 ) -> Optional[Niche]:
     """Create a niche object for stress testing."""
     try:
-        # Get trend analysis
-        trend_analysis = await trends_client.get_trend_analysis(keyword)
+        # Create synthetic trend analysis data for testing
+        trend_analysis = None  # Trends functionality removed
         
         # Simulate competitor analysis (in real implementation, this would use actual data)
         competitor_data = MarketSummary(
@@ -787,7 +780,7 @@ def _generate_recommended_mitigations(
 
 def _calculate_test_confidence(
     niche: Niche,
-    trend_analysis: Optional[TrendAnalysis],
+    trend_analysis: Optional[Any],
     scenarios_tested: int
 ) -> float:
     """Calculate confidence level in the stress test results."""

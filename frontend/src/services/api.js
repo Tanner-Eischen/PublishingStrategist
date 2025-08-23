@@ -1,347 +1,562 @@
 /**
- * API Service for KDP Strategist Frontend
- * 
- * This module provides a centralized interface for all API calls
- * to the FastAPI backend, including error handling and request/response formatting.
+ * Enhanced API service with WebSocket integration and progress tracking
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
-    this.defaultHeaders = {
-      'Content-Type': 'application/json',
-    };
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    this.clientId = null;
+    this.requestInterceptors = [];
+    this.responseInterceptors = [];
+    
+    // Create axios instance
+    this.client = axios.create({
+      baseURL: this.baseURL,
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    this.setupInterceptors();
+  }
+
+  setupInterceptors() {
+    // Request interceptor to add client ID
+    this.client.interceptors.request.use(
+      (config) => {
+        if (this.clientId) {
+          config.headers['X-Client-ID'] = this.clientId;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor for error handling
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        this.handleApiError(error);
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  setClientId(clientId) {
+    this.clientId = clientId;
+  }
+
+  handleApiError(error) {
+    if (error.response) {
+      const { status, data } = error.response;
+      
+      switch (status) {
+        case 400:
+          toast.error(data.detail || 'Invalid request');
+          break;
+        case 401:
+          toast.error('Authentication required');
+          break;
+        case 403:
+          toast.error('Access forbidden');
+          break;
+        case 404:
+          toast.error('Resource not found');
+          break;
+        case 429:
+          toast.warning('Rate limit exceeded. Please try again later.');
+          break;
+        case 500:
+          toast.error('Server error. Please try again.');
+          break;
+        default:
+          toast.error(data.detail || 'An error occurred');
+      }
+    } else if (error.request) {
+      toast.error('Network error. Please check your connection.');
+    } else {
+      toast.error('Request failed. Please try again.');
+    }
   }
 
   /**
-   * Make a generic API request
+   * Generic GET request method
+   * @param {string} url - The URL to make the GET request to
+   * @param {Object} config - Optional axios config
+   * @returns {Promise<Object>} Response data
    */
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    const config = {
-      headers: { ...this.defaultHeaders, ...options.headers },
-      ...options,
-    };
-
+  async get(url, config = {}) {
     try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          detail: `HTTP ${response.status}: ${response.statusText}`
-        }));
-        throw new Error(errorData.detail || 'API request failed');
-      }
-
-      return await response.json();
+      const response = await this.client.get(url, config);
+      return response.data;
     } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error);
+      console.error(`GET request failed for ${url}:`, error);
       throw error;
     }
   }
 
   /**
-   * GET request
+   * Check if an error is a network-related error
+   * @param {Error} error - The error to check
+   * @returns {boolean} True if it's a network error
    */
-  async get(endpoint, params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+  isNetworkError(error) {
+    // Check for network-related errors that should trigger retry logic
+    if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED') {
+      return true;
+    }
     
-    return this.request(url, {
-      method: 'GET',
-    });
+    // Check if request was made but no response received (network timeout/connection issues)
+    if (error.request && !error.response) {
+      return true;
+    }
+    
+    // Check for specific HTTP status codes that indicate temporary network issues
+    if (error.response) {
+      const status = error.response.status;
+      // 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
+      return status === 502 || status === 503 || status === 504;
+    }
+    
+    return false;
   }
 
   /**
-   * POST request
+   * Format error for user-friendly display
+   * @param {Error} error - The error to format
+   * @returns {string} Formatted error message
    */
-  async post(endpoint, data = {}) {
-    return this.request(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  formatError(error) {
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status;
+      const message = error.response.data?.message || error.response.data?.detail || error.message;
+      return `Error ${status}: ${message}`;
+    } else if (error.request) {
+      // Request was made but no response received
+      return 'Network error: Unable to connect to server';
+    } else {
+      // Something else happened
+      return error.message || 'An unexpected error occurred';
+    }
   }
 
-  /**
-   * PUT request
-   */
-  async put(endpoint, data = {}) {
-    return this.request(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  // Health check endpoints
+  async healthCheck() {
+    const response = await this.client.get('/api/health');
+    return response.data;
   }
 
-  /**
-   * DELETE request
-   */
-  async delete(endpoint) {
-    return this.request(endpoint, {
-      method: 'DELETE',
-    });
+  async detailedHealthCheck() {
+    const response = await this.client.get('/api/health/detailed');
+    return response.data;
   }
 
-  // Health Check
-  async checkHealth() {
-    return this.get('/health');
+  // Settings and preferences endpoints
+  async getUserPreferences() {
+    const response = await this.client.get('/api/settings/preferences');
+    return response.data;
   }
 
-  // Niche Discovery APIs
+  async updateUserPreferences(preferences) {
+    const response = await this.client.put('/api/settings/preferences', preferences);
+    return response.data;
+  }
+
+  async updatePreferenceCategory(category, updates) {
+    const response = await this.client.patch(`/api/settings/preferences/${category}`, updates);
+    return response.data;
+  }
+
+  async bulkUpdatePreferences(updates) {
+    const response = await this.client.patch('/api/settings/preferences', { preferences: updates });
+    return response.data;
+  }
+
+  async resetPreferences(category = null) {
+    const url = category ? `/api/settings/preferences/${category}` : '/api/settings/preferences';
+    const response = await this.client.delete(url);
+    return response.data;
+  }
+
+  async exportPreferences() {
+    const response = await this.client.get('/api/settings/preferences/export');
+    return response.data;
+  }
+
+  async importPreferences(preferencesData) {
+    const response = await this.client.post('/api/settings/preferences/import', preferencesData);
+    return response.data;
+  }
+
+  async getWebSocketStatus() {
+    const response = await this.client.get('/api/settings/websocket/status');
+    return response.data;
+  }
+
+  async getSystemInfo() {
+    const response = await this.client.get('/api/settings/system/info');
+    return response.data;
+  }
+
+  // Niche discovery endpoints
   async discoverNiches(keywords, options = {}) {
-    const requestData = {
-      keywords: Array.isArray(keywords) ? keywords : [keywords],
-      max_results: options.maxResults || 20,
-      min_search_volume: options.minSearchVolume || 1000,
-      max_competition: options.maxCompetition || 0.7,
-      include_seasonal: options.includeSeasonal || true,
-      include_charts: options.includeCharts !== false,
-      ...options
-    };
+    // Create a custom axios instance with longer timeout for niche discovery
+    const nicheClient = axios.create({
+      baseURL: this.baseURL,
+      timeout: 120000, // 2 minutes timeout for niche discovery
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
-    return this.post('/api/niches/discover', requestData);
+    // Add client ID header if available
+    if (this.clientId) {
+      nicheClient.defaults.headers['X-Client-ID'] = this.clientId;
+    }
+    
+    try {
+      const response = await nicheClient.post('/api/niches/discover', {
+        base_keywords: keywords,
+        ...options
+      });
+      return response.data;
+    } catch (error) {
+      // Handle timeout errors specifically
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Niche discovery is taking longer than expected. This may be due to high API usage. Please try again with fewer keywords or try again later.');
+      }
+      throw error;
+    }
   }
 
   async getTrendingNiches(options = {}) {
-    return this.get('/api/niches/trending', {
-      timeframe: options.timeframe || '30d',
-      category: options.category || 'all',
-      min_growth_rate: options.minGrowthRate || 0.1
-    });
+    const response = await this.client.get('/api/niches/trending', { params: options });
+    return response.data;
   }
 
-  // Competitor Analysis APIs
-  async analyzeCompetitors(asins, options = {}) {
-    const requestData = {
-      asins: Array.isArray(asins) ? asins : [asins],
-      include_pricing: options.includePricing !== false,
-      include_reviews: options.includeReviews !== false,
-      include_keywords: options.includeKeywords !== false,
-      include_charts: options.includeCharts !== false,
-      analysis_depth: options.analysisDepth || 'standard',
+  // Trend validation endpoints
+  async validateTrend(keyword, options = {}) {
+    const response = await this.client.post('/api/trends/validate', {
+      keywords: Array.isArray(keyword) ? keyword : [keyword],
       ...options
-    };
-    
-    return this.post('/api/competitors/analyze', requestData);
+    });
+    return response.data;
   }
 
-  async searchCompetitors(keyword, options = {}) {
-    return this.get('/api/competitors/search', {
+  async getTrendForecast(keyword, options = {}) {
+    const response = await this.client.post('/api/trends/forecast', {
       keyword,
-      max_results: options.maxResults || 50,
-      min_reviews: options.minReviews || 10,
-      max_price: options.maxPrice,
-      sort_by: options.sortBy || 'relevance'
+      ...options
     });
+    return response.data;
   }
 
-  async getMarketOverview(niche, options = {}) {
-    return this.get('/api/competitors/market-overview', {
+  async compareTrends(keywords, options = {}) {
+    const response = await this.client.post('/api/trends/compare', {
+      keywords,
+      ...options
+    });
+    return response.data;
+  }
+
+  // Competitor analysis endpoints
+  async analyzeCompetitors(niche, options = {}) {
+    const response = await this.client.post('/api/competitors/analyze', {
       niche,
-      timeframe: options.timeframe || '90d',
-      include_forecasts: options.includeForecasts !== false
+      ...options
     });
+    return response.data;
   }
 
-  // Listing Generation APIs
+  async getCompetitorDetails(asin) {
+    const response = await this.client.get(`/api/competitors/${asin}`);
+    return response.data;
+  }
+
+  // Listing generation endpoints
   async generateListing(niche, options = {}) {
-    const requestData = {
+    const response = await this.client.post('/api/listings/generate', {
       niche,
-      target_keywords: options.targetKeywords || [],
-      style_preferences: options.stylePreferences || {},
-      compliance_level: options.complianceLevel || 'strict',
-      include_seo_analysis: options.includeSeoAnalysis !== false,
-      include_variations: options.includeVariations !== false,
       ...options
-    };
-    
-    return this.post('/api/listings/generate', requestData);
+    });
+    return response.data;
   }
 
-  async optimizeListing(listingData, options = {}) {
-    const requestData = {
-      current_listing: listingData,
-      optimization_goals: options.optimizationGoals || ['seo', 'conversion'],
-      target_keywords: options.targetKeywords || [],
-      competitor_analysis: options.competitorAnalysis || false,
+  async optimizeListing(listing, options = {}) {
+    const response = await this.client.post('/api/listings/optimize', {
+      listing,
       ...options
-    };
-    
-    return this.post('/api/listings/optimize', requestData);
-  }
-
-  async getListingTemplates(category = 'all') {
-    return this.get('/api/listings/templates', { category });
-  }
-
-  async checkCompliance(listingData) {
-    return this.post('/api/listings/compliance-check', {
-      listing_data: listingData
     });
+    return response.data;
   }
 
-  // Trend Validation APIs
-  async validateTrends(keywords, options = {}) {
-    const requestData = {
-      keywords: Array.isArray(keywords) ? keywords : [keywords],
-      timeframe: options.timeframe || '12m',
-      include_forecasts: options.includeForecasts !== false,
-      include_seasonal: options.includeSeasonal !== false,
-      include_charts: options.includeCharts !== false,
-      analysis_depth: options.analysisDepth || 'comprehensive',
-      ...options
-    };
-    
-    return this.post('/api/trends/validate', requestData);
-  }
-
-  async getTrendingKeywords(options = {}) {
-    return this.get('/api/trends/trending-keywords', {
-      category: options.category || 'all',
-      timeframe: options.timeframe || '7d',
-      min_growth_rate: options.minGrowthRate || 0.2,
-      region: options.region || 'US'
-    });
-  }
-
-  async forecastTrend(keyword, options = {}) {
-    return this.get(`/api/trends/forecast/${encodeURIComponent(keyword)}`, {
-      forecast_period: options.forecastPeriod || '6m',
-      confidence_level: options.confidenceLevel || 0.8,
-      include_scenarios: options.includeScenarios !== false
-    });
-  }
-
-  async getSeasonalPatterns(keywords, options = {}) {
-    const requestData = {
-      keywords: Array.isArray(keywords) ? keywords : [keywords],
-      years_back: options.yearsBack || 3,
-      include_predictions: options.includePredictions !== false
-    };
-    
-    return this.post('/api/trends/seasonal-patterns', requestData);
-  }
-
-  // Stress Testing APIs
-  async runStressTest(niche, options = {}) {
-    const requestData = {
+  // Stress testing endpoints
+  async stressTestNiche(niche, scenarios = []) {
+    const response = await this.client.post('/api/stress/test', {
       niche,
-      test_scenarios: options.testScenarios || [
-        'market_saturation',
-        'seasonal_decline',
-        'trend_reversal',
-        'competition_increase'
-      ],
-      severity_level: options.severityLevel || 'moderate',
-      include_recommendations: options.includeRecommendations !== false,
-      ...options
-    };
+      scenarios
+    });
+    return response.data;
+  }
+
+  // Analysis management with progress tracking
+  async startAnalysisWithProgress(analysisType, parameters, onProgress = null, onComplete = null, onError = null) {
+    // Generate unique analysis ID
+    const analysisId = `${analysisType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    return this.post('/api/stress/run', requestData);
-  }
+    // Start the analysis via WebSocket if available
+    if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+      window.wsConnection.send(JSON.stringify({
+        type: 'start_analysis',
+        analysis_id: analysisId,
+        analysis_type: analysisType,
+        parameters
+      }));
 
-  async getAvailableScenarios() {
-    return this.get('/api/stress/scenarios');
-  }
-
-  async getRiskMatrix() {
-    return this.get('/api/stress/risk-matrix');
-  }
-
-  async compareNiches(niches, scenarios = null) {
-    const requestData = {
-      niches: Array.isArray(niches) ? niches : [niches],
-      scenarios: scenarios
-    };
-    
-    return this.post('/api/stress/compare', requestData);
-  }
-
-  // Export functionality
-  async exportData(data, format = 'csv', options = {}) {
-    const requestData = {
-      data,
-      format,
-      filename: options.filename,
-      include_metadata: options.includeMetadata !== false,
-      ...options
-    };
-    
-    const response = await this.request('/api/export', {
-      method: 'POST',
-      body: JSON.stringify(requestData),
-      headers: {
-        ...this.defaultHeaders,
-        'Accept': format === 'pdf' ? 'application/pdf' : 'application/octet-stream'
+      // Set up progress tracking
+      if (onProgress || onComplete || onError) {
+        this.setupAnalysisTracking(analysisId, onProgress, onComplete, onError);
       }
-    });
 
-    return response;
+      return { analysisId, status: 'started' };
+    } else {
+      // Fallback to direct API call
+      return await this.executeAnalysisDirectly(analysisType, parameters);
+    }
   }
 
-  // WebSocket connection for real-time updates
-  createWebSocket(onMessage, onError = null, onClose = null) {
-    const wsUrl = this.baseURL.replace('http', 'ws') + '/ws';
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onmessage = (event) => {
+  setupAnalysisTracking(analysisId, onProgress, onComplete, onError) {
+    const handleMessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
+        const message = JSON.parse(event.data);
+        
+        if (message.analysis_id === analysisId) {
+          switch (message.type) {
+            case 'analysis_progress':
+              if (onProgress) {
+                onProgress({
+                  analysisId,
+                  progress: message.progress,
+                  step: message.step,
+                  status: message.status,
+                  estimatedTime: message.estimated_time
+                });
+              }
+              break;
+              
+            case 'analysis_complete':
+              if (onComplete) {
+                onComplete({
+                  analysisId,
+                  results: message.results,
+                  executionTime: message.execution_time
+                });
+              }
+              // Remove listener
+              window.wsConnection.removeEventListener('message', handleMessage);
+              break;
+              
+            case 'analysis_error':
+              if (onError) {
+                onError({
+                  analysisId,
+                  error: message.error
+                });
+              }
+              // Remove listener
+              window.wsConnection.removeEventListener('message', handleMessage);
+              break;
+              
+            default:
+              // Handle unknown message types
+              console.log('Unknown message type:', message.type);
+              break;
+          }
+        }
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        console.error('Error parsing WebSocket message:', error);
       }
     };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      if (onError) onError(error);
-    };
-    
-    ws.onclose = (event) => {
-      console.log('WebSocket connection closed:', event.code, event.reason);
-      if (onClose) onClose(event);
-    };
-    
-    return ws;
+
+    if (window.wsConnection) {
+      window.wsConnection.addEventListener('message', handleMessage);
+    }
+  }
+
+  async executeAnalysisDirectly(analysisType, parameters) {
+    // Direct API calls without WebSocket progress tracking
+    switch (analysisType) {
+      case 'niche_discovery':
+        return await this.discoverNiches(parameters.keywords, parameters);
+      case 'trend_validation':
+        return await this.validateTrend(parameters.keyword, parameters);
+      case 'competitor_analysis':
+        return await this.analyzeCompetitors(parameters.niche, parameters);
+      case 'listing_generation':
+        return await this.generateListing(parameters.niche, parameters);
+      default:
+        throw new Error(`Unknown analysis type: ${analysisType}`);
+    }
+  }
+
+  async cancelAnalysis(analysisId) {
+    if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+      window.wsConnection.send(JSON.stringify({
+        type: 'cancel_analysis',
+        analysis_id: analysisId
+      }));
+      return { success: true };
+    }
+    return { success: false, error: 'WebSocket not connected' };
+  }
+
+  async pauseAnalysis(analysisId) {
+    if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+      window.wsConnection.send(JSON.stringify({
+        type: 'pause_analysis',
+        analysis_id: analysisId
+      }));
+      return { success: true };
+    }
+    return { success: false, error: 'WebSocket not connected' };
+  }
+
+  async resumeAnalysis(analysisId) {
+    if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+      window.wsConnection.send(JSON.stringify({
+        type: 'resume_analysis',
+        analysis_id: analysisId
+      }));
+      return { success: true };
+    }
+    return { success: false, error: 'WebSocket not connected' };
   }
 
   // Utility methods
-  formatError(error) {
-    if (error.response && error.response.data) {
-      return error.response.data.detail || error.response.data.message || 'An error occurred';
+  async downloadFile(url, filename) {
+    try {
+      const response = await this.client.get(url, { responseType: 'blob' });
+      const blob = new Blob([response.data]);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(downloadUrl);
+      return { success: true };
+    } catch (error) {
+      console.error('Download failed:', error);
+      return { success: false, error: error.message };
     }
-    return error.message || 'An unexpected error occurred';
   }
 
-  isNetworkError(error) {
-    return error.message.includes('fetch') || error.message.includes('Network');
-  }
-
-  // Cache management (simple in-memory cache)
-  cache = new Map();
-  
-  getCached(key) {
-    const cached = this.cache.get(key);
-    if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutes
-      return cached.data;
-    }
-    return null;
-  }
-  
-  setCache(key, data) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
+  async uploadFile(file, endpoint) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.client.post(endpoint, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
+    
+    return response.data;
   }
-  
-  clearCache() {
-    this.cache.clear();
+
+  // Request retry with exponential backoff
+  async retryRequest(requestFn, maxRetries = 3, baseDelay = 1000) {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await requestFn();
+      } catch (error) {
+        lastError = error;
+        
+        if (attempt === maxRetries) {
+          break;
+        }
+        
+        // Don't retry on client errors (4xx)
+        if (error.response && error.response.status >= 400 && error.response.status < 500) {
+          break;
+        }
+        
+        // Exponential backoff
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  }
+
+  // Batch requests with concurrency control
+  async batchRequests(requests, concurrency = 3) {
+    const results = [];
+    const executing = [];
+    
+    for (const request of requests) {
+      const promise = request().then(result => {
+        executing.splice(executing.indexOf(promise), 1);
+        return result;
+      });
+      
+      results.push(promise);
+      executing.push(promise);
+      
+      if (executing.length >= concurrency) {
+        await Promise.race(executing);
+      }
+    }
+    
+    return Promise.all(results);
   }
 }
 
-// Create and export a singleton instance
+// Create singleton instance
 export const apiService = new ApiService();
+
+// Export individual methods for convenience
+export const {
+  healthCheck,
+  detailedHealthCheck,
+  getUserPreferences,
+  updateUserPreferences,
+  updatePreferenceCategory,
+  bulkUpdatePreferences,
+  resetPreferences,
+  exportPreferences,
+  importPreferences,
+  getWebSocketStatus,
+  getSystemInfo,
+  discoverNiches,
+  getTrendingNiches,
+  validateTrend,
+  getTrendForecast,
+  compareTrends,
+  analyzeCompetitors,
+  getCompetitorDetails,
+  generateListing,
+  optimizeListing,
+  stressTestNiche,
+  startAnalysisWithProgress,
+  cancelAnalysis,
+  pauseAnalysis,
+  resumeAnalysis,
+  downloadFile,
+  uploadFile
+} = apiService;
+
 export default apiService;

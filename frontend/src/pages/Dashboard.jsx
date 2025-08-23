@@ -4,28 +4,24 @@ import {
   MagnifyingGlassIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  TrendingUpIcon,
-  ShieldCheckIcon,
+  ArrowTrendingUpIcon,
   ArrowRightIcon,
   EyeIcon,
-  CurrencyDollarIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import ChartContainer from '../components/common/ChartContainer';
+// import LoadingSpinner from '../components/common/LoadingSpinner';
+// import ChartContainer from '../components/common/ChartContainer';
 import { useApi } from '../App';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { apiService } = useApi();
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      setIsLoading(true);
       setError(null);
       
       try {
@@ -51,7 +47,7 @@ const Dashboard = () => {
         });
         setRecentActivity([]);
       } finally {
-        setIsLoading(false);
+        // Loading complete
       }
     };
 
@@ -84,7 +80,7 @@ const Dashboard = () => {
       name: 'Validate Trends',
       description: 'Check market trend validity',
       href: '/trend-validation',
-      icon: TrendingUpIcon,
+      icon: ArrowTrendingUpIcon,
       color: 'bg-orange-500 hover:bg-orange-600'
     }
   ];
@@ -98,7 +94,7 @@ const Dashboard = () => {
       case 'listing_generation':
         return DocumentTextIcon;
       case 'trend_validation':
-        return TrendingUpIcon;
+        return ArrowTrendingUpIcon;
       default:
         return EyeIcon;
     }
@@ -129,31 +125,15 @@ const Dashboard = () => {
     return 'text-red-600 bg-red-100';
   };
 
-  // Mock chart data
-  const performanceChart = {
-    type: 'line',
-    title: 'Analysis Performance Trend',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      datasets: [
-        {
-          label: 'Average Score',
-          data: [65, 72, 68, 78, 82, 85],
-          borderColor: 'rgba(59, 130, 246, 1)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: true
-        }
-      ]
-    }
-  };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="large" />
-      </div>
-    );
-  }
+
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <LoadingSpinner size="large" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="animate-fade-in">
@@ -232,7 +212,7 @@ const Dashboard = () => {
           <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <TrendingUpIcon className="h-8 w-8 text-purple-600" />
+                <ArrowTrendingUpIcon className="h-8 w-8 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Trends Validated</p>
@@ -324,10 +304,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Performance Chart */}
+      {/* Performance Chart
       <div className="mt-8">
         <ChartContainer chartData={performanceChart} />
-      </div>
+      </div> */}
     </div>
   );
 };

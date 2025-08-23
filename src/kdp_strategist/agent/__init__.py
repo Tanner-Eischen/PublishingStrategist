@@ -15,7 +15,6 @@ from .tools import (
     find_profitable_niches,
     analyze_competitor_asin,
     generate_kdp_listing,
-    validate_trend,
     niche_stress_test
 )
 
@@ -24,6 +23,5 @@ __all__ = [
     "find_profitable_niches",
     "analyze_competitor_asin", 
     "generate_kdp_listing",
-    "validate_trend",
     "niche_stress_test"
 ]

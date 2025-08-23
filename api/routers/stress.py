@@ -8,7 +8,7 @@ import logging
 from typing import Dict, Any, List
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 
 from ..models.requests import StressTestingRequest
@@ -25,19 +25,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_agent():
+def get_agent(request: Request):
     """Dependency to get the MCP agent from app state."""
-    from fastapi import Request
-    
-    def _get_agent(request: Request):
-        if not hasattr(request.app.state, 'agent'):
-            raise HTTPException(
-                status_code=503,
-                detail="MCP agent not available"
-            )
-        return request.app.state.agent
-    
-    return _get_agent
+    if not hasattr(request.app.state, 'agent'):
+        raise HTTPException(
+            status_code=503,
+            detail="MCP agent not available"
+        )
+    return request.app.state.agent
 
 
 def convert_mcp_scenario_to_api(mcp_scenario: Dict[str, Any]) -> StressTestScenario:
@@ -224,7 +219,7 @@ def generate_contingency_plans(scenarios: List[StressTestScenario]) -> List[str]
 async def run_stress_test(
     request: StressTestingRequest,
     background_tasks: BackgroundTasks,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Run stress test on a niche.
     
@@ -236,19 +231,28 @@ async def run_stress_test(
         
         # Prepare parameters for MCP agent
         mcp_params = {
-            "niche": request.niche,
+            "niche_keyword": request.niche,
             "test_scenarios": request.test_scenarios,
             "severity_level": request.severity_level,
-            "include_recommendations": request.include_recommendations
+            "time_horizon": "6_months"
         }
         
         # Call MCP agent's stress testing method
-        mcp_result = await agent.stress_test_niche(
-            niche=request.niche,
-            test_scenarios=request.test_scenarios,
-            severity_level=request.severity_level,
-            include_recommendations=request.include_recommendations
-        )
+        try:
+            mcp_result = await agent.niche_stress_test(
+                niche_keyword=request.niche,
+                test_scenarios=request.test_scenarios,
+                severity_level=request.severity_level,
+                time_horizon="6_months"
+            )
+        except AttributeError:
+            # Fallback if method name is different
+            mcp_result = await agent.stress_test_niche(
+                niche_keyword=request.niche,
+                test_scenarios=request.test_scenarios,
+                severity_level=request.severity_level,
+                time_horizon="6_months"
+            )
         
         # Convert MCP result to API format
         scenarios = [
@@ -411,7 +415,7 @@ async def get_risk_matrix():
 async def compare_niches(
     niches: List[str],
     scenarios: List[str] = None,
-    agent=Depends(get_agent())
+    agent=Depends(get_agent)
 ):
     """Compare stress test results across multiple niches.
     
@@ -439,12 +443,21 @@ async def compare_niches(
             }
             
             try:
-                mcp_result = await agent.stress_test_niche(
-                    niche=niche,
-                    test_scenarios=scenarios or ["market_saturation", "seasonal_decline", "trend_reversal"],
-                    severity_level="moderate",
-                    include_recommendations=False
-                )
+                # Try the correct method name first
+                try:
+                    mcp_result = await agent.niche_stress_test(
+                        niche_keyword=niche,
+                        test_scenarios=scenarios or ["market_saturation", "seasonal_decline", "trend_reversal"],
+                        severity_level="moderate",
+                        time_horizon="6_months"
+                    )
+                except AttributeError:
+                    mcp_result = await agent.stress_test_niche(
+                        niche_keyword=niche,
+                        test_scenarios=scenarios or ["market_saturation", "seasonal_decline", "trend_reversal"],
+                        severity_level="moderate",
+                        time_horizon="6_months"
+                    )
                 
                 scenarios_data = [
                     convert_mcp_scenario_to_api(scenario)

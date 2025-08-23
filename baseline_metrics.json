@@ -1,0 +1,68 @@
+{
+  "timestamp": "2024-12-19T00:00:00Z",
+  "version": "pre-cleanup",
+  "description": "Baseline metrics before codebase cleanup and optimization",
+  "codebase_metrics": {
+    "total_files": {
+      "all_relevant_files": 71990,
+      "description": "Total count of .py, .js, .ts, .json, .md, .yml, .yaml files"
+    },
+    "python_files": {
+      "count": 19753,
+      "description": "Total Python source files in the project"
+    },
+    "estimated_lines_of_code": {
+      "note": "Exact count pending due to large dataset size",
+      "description": "Total lines across all source files"
+    }
+  },
+  "performance_metrics": {
+    "startup_time": {
+      "value_ms": 3394.80,
+      "description": "Time to import main kdp_strategist module",
+      "notes": "Includes cache_manager initialization"
+    },
+    "memory_usage": {
+      "baseline_mb": 16.38,
+      "description": "Memory usage of Python process during basic operations"
+    },
+    "test_execution": {
+      "sample_test_time_seconds": 12.46,
+      "test_file": "test_backend.py",
+      "description": "Execution time for backend connectivity tests",
+      "status": "1 passed"
+    }
+  },
+  "cleanup_targets": {
+    "root_level_test_files": {
+      "count": 47,
+      "description": "Test files in project root that need consolidation",
+      "reference_document": "root_level_test_catalog.md"
+    },
+    "cache_implementations": {
+      "count": 5,
+      "files": [
+        "cache_manager.py",
+        "intelligent_cache.py",
+        "cache_analytics.py",
+        "cache_monitor.py",
+        "unified_cache_manager.py"
+      ],
+      "description": "Duplicate cache implementations identified for consolidation",
+      "reference_document": "cache_implementations_analysis.md"
+    }
+  },
+  "measurement_environment": {
+    "os": "Windows",
+    "python_version": "3.11.9",
+    "pytest_version": "8.4.1",
+    "measurement_date": "2024-12-19",
+    "project_state": "Before Phase 1 cleanup implementation"
+  },
+  "expected_improvements": {
+    "startup_time_reduction": "20-30% through cache consolidation",
+    "file_count_reduction": "47 fewer root-level test files",
+    "code_maintainability": "Improved through consolidation and organization",
+    "test_organization": "Structured test directories with clear categorization"
+  }
+}

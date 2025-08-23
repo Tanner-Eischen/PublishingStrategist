@@ -1,0 +1,284 @@
+{
+  "monitoring": {
+    "enabled": true,
+    "update_intervals": {
+      "metrics_seconds": 30,
+      "performance_report_seconds": 300,
+      "alert_check_seconds": 60,
+      "health_check_seconds": 120
+    },
+    "data_retention": {
+      "metrics_history_points": 100,
+      "performance_reports_count": 288,
+      "alert_history_count": 1000,
+      "log_entries_count": 10000
+    }
+  },
+  "dashboards": {
+    "auto_refresh": true,
+    "default_refresh_interval": 30,
+    "export_formats": ["json", "csv"],
+    "chart_types": {
+      "response_time": "line",
+      "error_rate": "line",
+      "cache_hit_rate": "gauge",
+      "throughput": "line",
+      "system_health": "gauge",
+      "memory_usage": "gauge",
+      "cpu_usage": "gauge"
+    }
+  },
+  "metrics": {
+    "system_health": {
+      "thresholds": {
+        "warning": 70,
+        "critical": 50
+      },
+      "weight": 1.0
+    },
+    "response_time": {
+      "thresholds": {
+        "warning": 2000,
+        "critical": 5000
+      },
+      "unit": "ms",
+      "weight": 0.8
+    },
+    "error_rate": {
+      "thresholds": {
+        "warning": 5,
+        "critical": 10
+      },
+      "unit": "%",
+      "weight": 0.9
+    },
+    "cache_hit_rate": {
+      "thresholds": {
+        "warning": 70,
+        "critical": 50
+      },
+      "unit": "%",
+      "weight": 0.6,
+      "higher_is_better": true
+    },
+    "memory_usage": {
+      "thresholds": {
+        "warning": 80,
+        "critical": 90
+      },
+      "unit": "%",
+      "weight": 0.7
+    },
+    "cpu_usage": {
+      "thresholds": {
+        "warning": 80,
+        "critical": 90
+      },
+      "unit": "%",
+      "weight": 0.7
+    },
+    "api_success_rate": {
+      "thresholds": {
+        "warning": 95,
+        "critical": 90
+      },
+      "unit": "%",
+      "weight": 0.8,
+      "higher_is_better": true
+    },
+    "synthetic_fallback_rate": {
+      "thresholds": {
+        "warning": 20,
+        "critical": 50
+      },
+      "unit": "%",
+      "weight": 0.5
+    }
+  },
+  "alerts": {
+    "enabled": true,
+    "cooldown_seconds": 300,
+    "escalation": {
+      "enabled": true,
+      "levels": [
+        {
+          "severity": "warning",
+          "delay_minutes": 15,
+          "recipients": ["ops@kdpstrategist.com"]
+        },
+        {
+          "severity": "critical",
+          "delay_minutes": 0,
+          "recipients": ["admin@kdpstrategist.com", "ops@kdpstrategist.com"]
+        }
+      ]
+    },
+    "channels": {
+      "email": {
+        "enabled": true,
+        "smtp": {
+          "host": "smtp.gmail.com",
+          "port": 587,
+          "use_tls": true,
+          "from": "monitoring@kdpstrategist.com",
+          "username": "${SMTP_USERNAME}",
+          "password": "${SMTP_PASSWORD}"
+        }
+      },
+      "webhook": {
+        "enabled": false,
+        "url": "${WEBHOOK_URL}",
+        "timeout": 10
+      },
+      "slack": {
+        "enabled": false,
+        "webhook_url": "${SLACK_WEBHOOK_URL}",
+        "channel": "#monitoring"
+      }
+    }
+  },
+  "log_monitoring": {
+    "enabled": true,
+    "log_directories": [
+      "logs",
+      "/var/log",
+      "."
+    ],
+    "log_patterns": ["*.log", "*.log.gz"],
+    "analysis": {
+      "error_threshold": 10,
+      "performance_threshold": 2000,
+      "anomaly_detection": true,
+      "pattern_matching": true
+    },
+    "retention": {
+      "log_entries": 50000,
+      "analysis_reports": 100,
+      "pattern_matches": 1000
+    }
+  },
+  "performance_monitoring": {
+    "enabled": true,
+    "metrics": {
+      "response_time": {
+        "percentiles": [50, 95, 99],
+        "buckets": [100, 500, 1000, 2000, 5000, 10000]
+      },
+      "throughput": {
+        "window_minutes": 5,
+        "alert_threshold": 1000
+      },
+      "error_tracking": {
+        "top_errors_count": 10,
+        "error_rate_window": 300
+      }
+    },
+    "reports": {
+      "interval_minutes": 5,
+      "retention_count": 288,
+      "include_details": true
+    }
+  },
+  "health_checks": {
+    "enabled": true,
+    "checks": {
+      "database_connection": {
+        "enabled": true,
+        "timeout": 5,
+        "critical": true
+      },
+      "cache_connectivity": {
+        "enabled": true,
+        "timeout": 3,
+        "critical": false
+      },
+      "external_apis": {
+        "enabled": true,
+        "timeout": 10,
+        "critical": false,
+        "apis": ["amazon", "ubersuggest"]
+      },
+      "disk_space": {
+        "enabled": true,
+        "warning_threshold": 80,
+        "critical_threshold": 90
+      },
+      "memory_usage": {
+        "enabled": true,
+        "warning_threshold": 80,
+        "critical_threshold": 90
+      }
+    }
+  },
+  "automated_responses": {
+    "enabled": true,
+    "actions": {
+      "clear_cache": {
+        "enabled": true,
+        "triggers": ["high_memory_usage", "cache_errors"],
+        "timeout": 60,
+        "retry_count": 2,
+        "cooldown": 300
+      },
+      "restart_service": {
+        "enabled": false,
+        "triggers": ["critical_errors", "service_unresponsive"],
+        "timeout": 120,
+        "retry_count": 1,
+        "cooldown": 600
+      },
+      "activate_fallback": {
+        "enabled": true,
+        "triggers": ["api_failures", "high_error_rate"],
+        "timeout": 30,
+        "retry_count": 1,
+        "cooldown": 180
+      },
+      "scale_resources": {
+        "enabled": false,
+        "triggers": ["high_load", "slow_response"],
+        "timeout": 300,
+        "retry_count": 1,
+        "cooldown": 900
+      }
+    }
+  },
+  "data_export": {
+    "enabled": true,
+    "formats": ["json", "csv", "prometheus"],
+    "compression": true,
+    "retention_days": 30,
+    "scheduled_exports": {
+      "daily_summary": {
+        "enabled": true,
+        "time": "02:00",
+        "format": "json",
+        "include": ["metrics", "alerts", "performance"]
+      },
+      "weekly_report": {
+        "enabled": true,
+        "day": "sunday",
+        "time": "03:00",
+        "format": "csv",
+        "include": ["all"]
+      }
+    }
+  },
+  "security": {
+    "api_authentication": {
+      "enabled": true,
+      "methods": ["api_key", "jwt"]
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100,
+      "burst_limit": 200
+    },
+    "audit_logging": {
+      "enabled": true,
+      "log_file": "logs/monitoring_audit.log",
+      "include_requests": true,
+      "include_responses": false
+    }
+  }
+}

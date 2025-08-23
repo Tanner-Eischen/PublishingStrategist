@@ -1,0 +1,133 @@
+{
+  "environments": {
+    "development": {
+      "api_url": "http://localhost:8000",
+      "database_url": "sqlite:///dev.db",
+      "cache_type": "file",
+      "log_level": "DEBUG",
+      "feature_flags": {
+        "simple_trends_percentage": 100.0,
+        "enable_a_b_testing": false,
+        "force_simple_trends": false
+      }
+    },
+    "staging": {
+      "api_url": "https://staging-api.kdpstrategist.com",
+      "database_url": "postgresql://staging_user:staging_pass@staging_db:5432/kdp_strategist_staging",
+      "cache_type": "redis",
+      "cache_url": "redis://staging-redis:6379/0",
+      "log_level": "INFO",
+      "feature_flags": {
+        "simple_trends_percentage": 50.0,
+        "enable_a_b_testing": true,
+        "a_b_split": 50.0,
+        "force_simple_trends": false
+      }
+    },
+    "production": {
+      "api_url": "https://api.kdpstrategist.com",
+      "database_url": "postgresql://prod_user:prod_pass@prod_db:5432/kdp_strategist_prod",
+      "cache_type": "redis",
+      "cache_url": "redis://prod-redis:6379/0",
+      "log_level": "WARNING",
+      "feature_flags": {
+        "simple_trends_percentage": 0.0,
+        "enable_a_b_testing": false,
+        "force_simple_trends": false
+      }
+    }
+  },
+  "deployment": {
+    "strategy": "blue_green",
+    "health_check_timeout": 300,
+    "rollback_timeout": 600,
+    "backup_retention_days": 7,
+    "deployment_timeout": 1800,
+    "pre_deployment_checks": [
+      "check_dependencies",
+      "run_tests",
+      "validate_config",
+      "check_disk_space",
+      "verify_permissions"
+    ],
+    "post_deployment_checks": [
+      "health_check",
+      "smoke_tests",
+      "performance_check",
+      "feature_flag_validation",
+      "api_endpoint_check"
+    ],
+    "blue_green": {
+      "health_check_retries": 5,
+      "health_check_interval": 30,
+      "traffic_switch_delay": 60,
+      "keep_previous_version": true
+    }
+  },
+  "monitoring": {
+    "health_check_interval": 30,
+    "alert_thresholds": {
+      "response_time_ms": 2000,
+      "error_rate_percent": 5.0,
+      "success_rate_percent": 95.0,
+      "memory_usage_percent": 80.0,
+      "cpu_usage_percent": 70.0
+    },
+    "endpoints": {
+      "health": "/api/health",
+      "ready": "/api/health/ready",
+      "live": "/api/health/live",
+      "feature_flags": "/api/feature-flags/health"
+    }
+  },
+  "rollback": {
+    "automatic_rollback": {
+      "enabled": true,
+      "triggers": [
+        "health_check_failure",
+        "high_error_rate",
+        "performance_degradation"
+      ],
+      "cooldown_minutes": 15
+    },
+    "manual_rollback": {
+      "confirmation_required": true,
+      "backup_before_rollback": true
+    }
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": [
+      {
+        "type": "email",
+        "recipients": ["admin@kdpstrategist.com", "devops@kdpstrategist.com"],
+        "events": ["deployment_start", "deployment_success", "deployment_failure", "rollback"]
+      },
+      {
+        "type": "slack",
+        "webhook_url": "${SLACK_WEBHOOK_URL}",
+        "channel": "#deployments",
+        "events": ["deployment_success", "deployment_failure", "rollback"]
+      }
+    ]
+  },
+  "security": {
+    "require_approval": {
+      "production": true,
+      "staging": false,
+      "development": false
+    },
+    "allowed_deployers": [
+      "admin",
+      "devops",
+      "lead_developer"
+    ],
+    "deployment_windows": {
+      "production": {
+        "allowed_days": ["monday", "tuesday", "wednesday", "thursday"],
+        "allowed_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17],
+        "timezone": "UTC"
+      }
+    }
+  }
+}

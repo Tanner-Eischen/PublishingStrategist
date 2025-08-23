@@ -1,0 +1,139 @@
+/* Chart Components Responsive Styles */
+
+/* Base chart container styles */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+/* Responsive chart sizing */
+@media (max-width: 640px) {
+  .chart-container {
+    min-height: 300px;
+  }
+  
+  /* Reduce chart height on mobile */
+  .chart-container canvas {
+    max-height: 300px !important;
+  }
+  
+  /* Stack chart controls vertically on mobile */
+  .chart-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Make filter controls stack on mobile */
+  .chart-filters {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Tablet adjustments */
+  .chart-container {
+    min-height: 350px;
+  }
+  
+  .chart-filters {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Data table responsive styles */
+.data-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .data-table-container table {
+    font-size: 0.875rem;
+  }
+  
+  .data-table-container th,
+  .data-table-container td {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* Hide less important columns on mobile */
+  .data-table-container .hide-mobile {
+    display: none;
+  }
+}
+
+/* Chart dashboard responsive grid */
+.chart-dashboard-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .chart-dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .chart-dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Export dropdown responsive positioning */
+@media (max-width: 640px) {
+  .export-dropdown {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
+    max-width: 300px !important;
+    z-index: 9999 !important;
+  }
+}
+
+/* Touch-friendly interactive elements */
+@media (hover: none) and (pointer: coarse) {
+  .chart-button,
+  .filter-button,
+  .sort-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .pagination-button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Chart legend responsive positioning */
+@media (max-width: 640px) {
+  .chart-legend {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin-top: 1rem;
+  }
+}
+
+/* Scrollable chart containers on mobile */
+.chart-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .chart-scroll-container {
+    min-width: 100%;
+  }
+  
+  .chart-scroll-container > * {
+    min-width: 320px;
+  }
+}

@@ -1,0 +1,95 @@
+# Prometheus alert rules for KDP Strategist
+groups:
+  - name: kdp_strategist_alerts
+    rules:
+      # High response time alert
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.instance }}"
+
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      # Service down alert
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+
+      # Feature flag performance degradation
+      - alert: FeatureFlagPerformanceDegradation
+        expr: increase(feature_flag_performance_degradation_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Feature flag performance degradation detected"
+          description: "Performance degradation detected in feature flag system for {{ $labels.instance }}"
+
+      # Cache hit rate too low
+      - alert: LowCacheHitRate
+        expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) < 0.7
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      # Database connection issues
+      - alert: DatabaseConnectionIssues
+        expr: increase(database_connection_errors_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection issues"
+          description: "{{ $value }} database connection errors in the last 5 minutes for {{ $labels.instance }}"
+
+  - name: deployment_alerts
+    rules:
+      # Deployment in progress
+      - alert: DeploymentInProgress
+        expr: deployment_status == 1
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Deployment in progress"
+          description: "Deployment is currently in progress for {{ $labels.environment }}"
+
+      # Deployment failed
+      - alert: DeploymentFailed
+        expr: deployment_status == -1
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Deployment failed"
+          description: "Deployment failed for {{ $labels.environment }}"
+
+      # Rollback triggered
+      - alert: RollbackTriggered
+        expr: increase(rollback_triggered_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rollback triggered"
+          description: "Automatic rollback was triggered for {{ $labels.environment }}"

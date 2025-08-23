@@ -28,7 +28,7 @@ import argparse
 src_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(src_dir))
 
-from config.settings import Settings
+from config.settings import get_settings
 from .agent.kdp_strategist_agent import KDPStrategistAgent
 
 # Configure logging
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 class KDPStrategistServer:
     """Main server class for the KDP Strategist MCP agent."""
     
-    def __init__(self, settings: Settings):
+    def __init__(self, settings):
         """Initialize the server with configuration settings."""
         self.settings = settings
         self.agent: Optional[KDPStrategistAgent] = None
@@ -281,7 +281,7 @@ async def main() -> None:
     try:
         # Load configuration
         logger.info("Loading configuration...")
-        settings = Settings.from_env()
+        settings = get_settings()
         
         # Validate critical settings
         if not settings.api.keepa_api_key and settings.environment != "development":

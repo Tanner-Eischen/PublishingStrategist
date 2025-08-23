@@ -1,261 +1,176 @@
-"""Global error handlers for FastAPI application.
-
-This module provides centralized error handling for the KDP Strategist API,
-including custom exception handlers and response formatting.
 """
-
+Error handlers for FastAPI application.
+"""
 import logging
-import traceback
-from typing import Dict, Any, Optional
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .exceptions import (
-    KDPStrategistError,
-    ConfigurationError,
-    APIClientError,
-    RateLimitExceededError,
-    APIAuthenticationError,
-    APITimeoutError,
-    DataValidationError,
-    CacheError,
-    DatabaseError,
-    BusinessLogicError,
-    ExternalServiceError,
-    ErrorCode
+    KDPStrategistError, APIClientError, DataValidationError,
+    ConfigurationError, RateLimitExceededError
 )
 
 logger = logging.getLogger(__name__)
 
 
-def create_error_response(
-    error_code: str,
-    message: str,
-    status_code: int = 500,
-    details: Optional[Dict[str, Any]] = None,
-    request_id: Optional[str] = None
-) -> JSONResponse:
-    """Create standardized error response."""
-    content = {
-        "error": error_code,
-        "message": message,
-        "status_code": status_code
-    }
+async def kdp_strategist_exception_handler(request: Request, exc: KDPStrategistError) -> JSONResponse:
+    """Handle base KDP Strategist exceptions."""
+    logger.error(f"KDP Strategist error: {str(exc)} - URL: {request.url}")
     
-    if details:
-        content["details"] = details
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "internal_error",
+            "message": str(exc),
+            "details": "An internal error occurred while processing your request."
+        }
+    )
+
+
+async def api_client_exception_handler(request: Request, exc: APIClientError) -> JSONResponse:
+    """Handle API client exceptions."""
+    logger.error(f"API client error in {exc.service}: {exc.message} - URL: {request.url}")
     
-    if request_id:
-        content["request_id"] = request_id
+    # Map to appropriate HTTP status codes
+    status_code = 502  # Bad Gateway by default
+    if hasattr(exc, 'status_code') and exc.status_code:
+        if exc.status_code == 401:
+            status_code = 401  # Unauthorized
+        elif exc.status_code == 403:
+            status_code = 403  # Forbidden
+        elif exc.status_code == 429:
+            status_code = 429  # Too Many Requests
+        elif 400 <= exc.status_code < 500:
+            status_code = 400  # Bad Request
     
     return JSONResponse(
         status_code=status_code,
+        content={
+            "error": "api_error",
+            "service": exc.service,
+            "message": exc.message,
+            "details": f"External API error from {exc.service}"
+        }
+    )
+
+
+async def validation_exception_handler(request: Request, exc: DataValidationError) -> JSONResponse:
+    """Handle data validation exceptions."""
+    logger.warning(f"Validation error in {exc.field}: {exc.message} - URL: {request.url}")
+    
+    content = {
+        "error": "validation_error",
+        "field": exc.field,
+        "message": exc.message,
+        "details": "The provided data failed validation."
+    }
+    
+    if hasattr(exc, 'value') and exc.value is not None:
+        content["invalid_value"] = exc.value
+    
+    return JSONResponse(
+        status_code=400,
         content=content
     )
 
 
-async def kdp_strategist_exception_handler(request: Request, exc: KDPStrategistError) -> JSONResponse:
-    """Handle custom KDP Strategist exceptions."""
-    request_id = getattr(request.state, 'request_id', None)
+async def configuration_exception_handler(request: Request, exc: ConfigurationError) -> JSONResponse:
+    """Handle configuration exceptions."""
+    logger.error(f"Configuration error in {exc.setting}: {exc.message} - URL: {request.url}")
     
-    # Log the error with appropriate level
-    if isinstance(exc, (ConfigurationError, APIAuthenticationError)):
-        logger.error(f"Configuration/Auth error: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 500
-    elif isinstance(exc, RateLimitExceededError):
-        logger.warning(f"Rate limit exceeded: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 429
-    elif isinstance(exc, DataValidationError):
-        logger.warning(f"Data validation error: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 400
-    elif isinstance(exc, APITimeoutError):
-        logger.warning(f"API timeout: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 504
-    elif isinstance(exc, ExternalServiceError):
-        logger.error(f"External service error: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 503
-    elif isinstance(exc, BusinessLogicError):
-        logger.warning(f"Business logic error: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 422
-    else:
-        logger.error(f"KDP Strategist error: {exc.message}", extra={
-            "error_code": exc.error_code.value,
-            "details": exc.details,
-            "request_id": request_id
-        })
-        status_code = 500
-    
-    return create_error_response(
-        error_code=exc.error_code.value,
-        message=exc.message,
-        status_code=status_code,
-        details=exc.details,
-        request_id=request_id
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "configuration_error",
+            "setting": exc.setting,
+            "message": exc.message,
+            "details": "A configuration error occurred. Please check your settings."
+        }
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    """Handle Pydantic validation errors."""
-    request_id = getattr(request.state, 'request_id', None)
+async def rate_limit_exception_handler(request: Request, exc: RateLimitExceededError) -> JSONResponse:
+    """Handle rate limit exceptions."""
+    logger.warning(f"Rate limit exceeded for {exc.service}: {exc.message} - URL: {request.url}")
     
-    logger.warning(f"Validation error: {exc}", extra={
-        "request_id": request_id,
-        "errors": exc.errors()
-    })
+    headers = {}
+    if hasattr(exc, 'retry_after') and exc.retry_after:
+        headers["Retry-After"] = str(exc.retry_after)
     
-    # Format validation errors for better user experience
-    formatted_errors = []
-    for error in exc.errors():
-        field_path = " -> ".join(str(loc) for loc in error["loc"])
-        formatted_errors.append({
-            "field": field_path,
-            "message": error["msg"],
-            "type": error["type"]
-        })
-    
-    return create_error_response(
-        error_code=ErrorCode.DATA_VALIDATION_ERROR.value,
-        message="Request validation failed",
-        status_code=422,
-        details={"validation_errors": formatted_errors},
-        request_id=request_id
+    return JSONResponse(
+        status_code=429,
+        headers=headers,
+        content={
+            "error": "rate_limit_exceeded",
+            "service": exc.service,
+            "message": exc.message,
+            "retry_after": getattr(exc, 'retry_after', None),
+            "details": f"Rate limit exceeded for {exc.service}. Please try again later."
+        }
     )
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle FastAPI HTTP exceptions."""
-    request_id = getattr(request.state, 'request_id', None)
+    logger.warning(f"HTTP {exc.status_code} error: {exc.detail} - URL: {request.url}")
     
-    logger.warning(f"HTTP exception: {exc.detail}", extra={
-        "status_code": exc.status_code,
-        "request_id": request_id
-    })
-    
-    return create_error_response(
-        error_code="HTTP_ERROR",
-        message=exc.detail,
+    return JSONResponse(
         status_code=exc.status_code,
-        request_id=request_id
+        content={
+            "error": "http_error",
+            "status_code": exc.status_code,
+            "message": exc.detail,
+            "details": "An HTTP error occurred."
+        }
     )
 
 
-async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    """Handle Starlette HTTP exceptions."""
-    request_id = getattr(request.state, 'request_id', None)
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Handle FastAPI validation errors."""
+    logger.warning(f"Request validation error: {exc.errors()} - URL: {request.url}")
     
-    logger.warning(f"Starlette HTTP exception: {exc.detail}", extra={
-        "status_code": exc.status_code,
-        "request_id": request_id
-    })
-    
-    return create_error_response(
-        error_code="HTTP_ERROR",
-        message=exc.detail,
-        status_code=exc.status_code,
-        request_id=request_id
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "validation_error",
+            "message": "Request validation failed",
+            "details": exc.errors(),
+            "body": exc.body
+        }
     )
 
 
-async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle all unhandled exceptions."""
-    request_id = getattr(request.state, 'request_id', None)
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Handle general unhandled exceptions."""
+    logger.error(f"Unhandled exception: {str(exc)} - URL: {request.url}", exc_info=True)
     
-    # Log the full traceback for debugging
-    logger.error(f"Unhandled exception: {exc}", extra={
-        "request_id": request_id,
-        "traceback": traceback.format_exc()
-    })
-    
-    # Don't expose internal error details in production
-    return create_error_response(
-        error_code=ErrorCode.INTERNAL_ERROR.value,
-        message="An internal server error occurred. Please try again later.",
+    return JSONResponse(
         status_code=500,
-        request_id=request_id
+        content={
+            "error": "internal_server_error",
+            "message": "An unexpected error occurred",
+            "details": "Please try again later or contact support if the problem persists."
+        }
     )
 
 
 def register_error_handlers(app):
-    """Register all error handlers with the FastAPI application."""
-    
+    """Register all error handlers with the FastAPI app."""
     # Custom exception handlers
     app.add_exception_handler(KDPStrategistError, kdp_strategist_exception_handler)
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(HTTPException, http_exception_handler)
-    app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)
+    app.add_exception_handler(APIClientError, api_client_exception_handler)
+    app.add_exception_handler(DataValidationError, validation_exception_handler)
+    app.add_exception_handler(ConfigurationError, configuration_exception_handler)
+    app.add_exception_handler(RateLimitExceededError, rate_limit_exception_handler)
     
-    # Global exception handler (catch-all)
-    app.add_exception_handler(Exception, global_exception_handler)
+    # FastAPI built-in exception handlers
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_error_handler)
+    
+    # General exception handler (catch-all)
+    app.add_exception_handler(Exception, general_exception_handler)
     
     logger.info("Error handlers registered successfully")
-
-
-class ErrorContext:
-    """Context manager for error handling with additional context."""
-    
-    def __init__(self, operation: str, **context):
-        self.operation = operation
-        self.context = context
-        self.logger = logging.getLogger(self.__class__.__module__)
-    
-    def __enter__(self):
-        self.logger.debug(f"Starting operation: {self.operation}", extra=self.context)
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.logger.debug(f"Completed operation: {self.operation}", extra=self.context)
-        else:
-            self.logger.error(
-                f"Operation failed: {self.operation} - {exc_val}",
-                extra={**self.context, "exception_type": exc_type.__name__}
-            )
-        return False  # Don't suppress exceptions
-
-
-def handle_api_errors(operation: str):
-    """Decorator for handling API errors with context."""
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except KDPStrategistError:
-                # Re-raise custom exceptions as-is
-                raise
-            except Exception as e:
-                # Wrap unexpected exceptions
-                logger.error(f"Unexpected error in {operation}: {e}")
-                raise KDPStrategistError(
-                    message=f"Operation '{operation}' failed unexpectedly",
-                    error_code=ErrorCode.UNEXPECTED_ERROR,
-                    details={"operation": operation},
-                    cause=e
-                )
-        return wrapper
-    return decorator
