@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -45,13 +45,7 @@ const IncidentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: '', severity: '' });
 
-  useEffect(() => {
-    fetchIncidents();
-    fetchSummary();
-    checkMonitoringStatus();
-  }, [filter]);
-
-  const fetchIncidents = async () => {
+  const fetchIncidents = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (filter.status) params.append('status', filter.status);
@@ -63,7 +57,7 @@ const IncidentDashboard: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch incidents:', error);
     }
-  };
+  }, [filter]);
 
   const fetchSummary = async () => {
     try {
@@ -86,6 +80,12 @@ const IncidentDashboard: React.FC = () => {
       console.error('Failed to check monitoring status:', error);
     }
   };
+
+  useEffect(() => {
+    fetchIncidents();
+    fetchSummary();
+    checkMonitoringStatus();
+  }, [fetchIncidents]);
 
   const toggleMonitoring = async () => {
     try {

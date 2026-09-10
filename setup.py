@@ -11,29 +11,28 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="kdp_strategist",
     version="0.1.0",
-    author="KDP Strategist Team",
-    author_email="team@kdpstrategist.ai",
-    description="AI Agent for Amazon KDP Publishing Strategy",
+    author="Tanner Eischen",
+    description="Research tools for Amazon Kindle Direct Publishing niches and listings",
+    license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/kdp_strategist/kdp_strategist",
+    url="https://github.com/Tanner-Eischen/PublishingStrategist",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Office/Business :: Financial :: Investment",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=requirements,
     extras_require={
         "dev": [
@@ -47,12 +46,6 @@ setup(
         "docs": [
             "sphinx>=7.1.0",
             "sphinx-rtd-theme>=1.3.0",
-        ],
-    },
-    entry_points={
-        "console_scripts": [
-            "kdp_strategist=kdp_strategist.main:main",
-            "kdp_strategist_mcp=kdp_strategist.mcp_server:main",
         ],
     },
     include_package_data=True,

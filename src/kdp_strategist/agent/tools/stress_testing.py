@@ -508,7 +508,8 @@ async def niche_stress_test(
                 "test_timestamp": datetime.now().isoformat()
             }
         
-        # Trend analysis functionality removed - using synthetic data for testing
+        # Trend analysis is not part of the current implementation.
+        trend_analysis = None
         
         # Determine scenarios to test
         scenarios_to_test = []

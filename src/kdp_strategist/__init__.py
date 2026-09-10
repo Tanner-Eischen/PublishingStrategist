@@ -12,9 +12,7 @@ integration with AI development environments.
 """
 
 __version__ = "0.1.0"
-__author__ = "KDP Strategist Team"
-__description__ = "AI Agent for Amazon KDP Publishing Strategy"
+__author__ = "Tanner Eischen"
+__description__ = "Research tools for Amazon KDP niches and listings"
 
-from .agent import KDPStrategistAgent
-
-__all__ = ["KDPStrategistAgent"]
+__all__ = ["__author__", "__description__", "__version__"]

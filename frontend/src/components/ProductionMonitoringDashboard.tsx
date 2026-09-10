@@ -2,18 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Database,
   Download,
-  Eye,
   Play,
   RefreshCw,
   Server,
   Square,
   TrendingDown,
-  TrendingUp,
-  Zap
+  TrendingUp
 } from 'lucide-react';
 
 interface Metric {

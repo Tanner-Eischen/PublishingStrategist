@@ -826,9 +826,6 @@ class KeepaClient:
             })
         
         return competitors
-        
-        logger.warning(f"No product data available for ASIN: {asin} - Keepa API unavailable")
-        return None
     
     async def _get_product_data_from_api(self, asin: str, include_history: bool = False, 
                                         stats_days: int = 30, include_offers: int = 0, force_refresh: bool = False) -> Dict[str, Any]:
